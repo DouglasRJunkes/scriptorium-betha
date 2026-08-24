@@ -1074,6 +1074,106 @@
   var writable = true;
   var lastFocused = null;
 
+  // Configuracao do backend Supabase (usado apenas quando a pagina roda fora do Claude,
+  // por exemplo publicada no GitHub Pages). Dentro do Claude, o salvamento continua usando
+  // a capability nativa do Artifact (capability.publish) e este bloco fica inativo.
+  var SUPABASE_URL = "https://tnbpmgmgeaafovmctepm.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_ACdm9Bsf2XMhx6dQYXaFmg_hHDlsYaT";
+
+  function supabaseConfigured() {
+    return !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+  }
+  function supabaseHeaders(extra) {
+    var h = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type": "application/json"
+    };
+    if (extra) {
+      for (var k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k)) h[k] = extra[k];
+      }
+    }
+    return h;
+  }
+  function mapRowToScript(r) {
+    return {
+      id: r.id, title: r.title, system: r.system, description: r.description || "",
+      script: r.script, author: r.author || "", createdAt: r.created_at, updatedAt: r.updated_at
+    };
+  }
+  function scriptToRow(s) {
+    return {
+      id: s.id, title: s.title, system: s.system, description: s.description || "",
+      script: s.script, author: s.author || "", created_at: s.createdAt, updated_at: s.updatedAt
+    };
+  }
+  function fetchScriptsFromSupabase() {
+    return fetch(SUPABASE_URL + "/rest/v1/scripts?select=*&order=updated_at.desc", {
+      headers: supabaseHeaders()
+    }).then(function (res) {
+      if (!res.ok) throw new Error("http_" + res.status);
+      return res.json();
+    }).then(function (rows) {
+      return (rows || []).map(mapRowToScript);
+    });
+  }
+  function diffScripts(prev, next) {
+    var prevMap = {};
+    prev.forEach(function (s) { prevMap[s.id] = s; });
+    var nextMap = {};
+    next.forEach(function (s) { nextMap[s.id] = s; });
+    var inserted = next.filter(function (s) { return !prevMap[s.id]; });
+    var deleted = prev.filter(function (s) { return !nextMap[s.id]; });
+    var updated = next.filter(function (s) {
+      var p = prevMap[s.id];
+      return p && p.updatedAt !== s.updatedAt;
+    });
+    return { inserted: inserted, deleted: deleted, updated: updated };
+  }
+  function attemptSupabaseSave(nextScripts, opts) {
+    var diff = diffScripts(scripts, nextScripts);
+    var ops = [];
+    diff.inserted.forEach(function (s) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/scripts", {
+        method: "POST",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify([scriptToRow(s)])
+      }));
+    });
+    diff.updated.forEach(function (s) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/scripts?id=eq." + encodeURIComponent(s.id), {
+        method: "PATCH",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify(scriptToRow(s))
+      }));
+    });
+    diff.deleted.forEach(function (s) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/scripts?id=eq." + encodeURIComponent(s.id), {
+        method: "DELETE",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" })
+      }));
+    });
+    Promise.all(ops).then(function (results) {
+      var failed = results.filter(function (r) { return !r.ok; });
+      if (failed.length) { throw new Error("save_failed"); }
+      scripts = nextScripts;
+      renderGrid();
+      closeModal();
+      showToast("Alteracoes salvas.");
+    }).catch(function () {
+      if (opts.onError) opts.onError("Nao foi possivel salvar no banco de dados. Tente novamente.");
+    });
+  }
+  function loadFromSupabase() {
+    fetchScriptsFromSupabase().then(function (rows) {
+      scripts = rows;
+      renderGrid();
+    }).catch(function () {
+      showToast("Nao foi possivel carregar os scripts do banco de dados.", "error");
+    });
+  }
+
   function qs(sel, root) { return (root || document).querySelector(sel); }
   function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function el(tag, attrs, text) {
@@ -2649,16 +2749,20 @@
 
   function publishScripts(nextScripts, opts) {
     opts = opts || {};
-    if (!capability) {
-      if (opts.onError) opts.onError("Nao e possivel salvar alteracoes neste visualizador.");
-      else showToast("Nao e possivel salvar alteracoes neste visualizador.", "error");
-      return;
-    }
     if (!writable) {
       if (opts.onError) opts.onError("Este repositorio esta em modo somente leitura para voce.");
       return;
     }
-    attemptPublish(nextScripts, opts, false);
+    if (capability) {
+      attemptPublish(nextScripts, opts, false);
+      return;
+    }
+    if (supabaseConfigured()) {
+      attemptSupabaseSave(nextScripts, opts);
+      return;
+    }
+    if (opts.onError) opts.onError("Nao e possivel salvar alteracoes neste visualizador.");
+    else showToast("Nao e possivel salvar alteracoes neste visualizador.", "error");
   }
 
   function attemptPublish(nextScripts, opts, isRetry) {
@@ -2769,6 +2873,10 @@
         }).catch(function () {
           capability = null; writable = false; showReadonlyBanner();
         });
+      } else if (supabaseConfigured()) {
+        capability = null;
+        writable = true;
+        loadFromSupabase();
       } else {
         capability = null; writable = false; showReadonlyBanner();
       }
