@@ -1,0 +1,2788 @@
+<title>Scriptorium Betha</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+
+<style id="app-style">
+  :root {
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --surface-2: #eaeef8;
+    --border: #dee3f0;
+    --border-strong: #c6ccdf;
+    --text: #1b1a22;
+    --text-muted: #5c6070;
+    --text-faint: #9296a8;
+    --accent: #0061ff;
+    --accent-strong: #0050d6;
+    --accent-soft: #e8f0ff;
+    --danger: #a94435;
+    --danger-strong: #8a3327;
+    --danger-soft: #f4e3df;
+    --focus: #0061ff;
+    --badge-s: 55%;
+    --badge-l: 42%;
+    --badge-fg: #ffffff;
+    --shadow-sm: 0 1px 2px rgba(10, 14, 36, 0.08);
+    --shadow-lg: 0 16px 40px -16px rgba(10, 14, 36, 0.3);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0b12;
+      --surface: #14151f;
+      --surface-2: #1b1d2a;
+      --border: #2a2d3d;
+      --border-strong: #3b3f54;
+      --text: #edeef5;
+      --text-muted: #a5a8ba;
+      --text-faint: #6e7186;
+      --accent: #4c8dff;
+      --accent-strong: #7cb0ff;
+      --accent-soft: #16234a;
+      --danger: #dd8b7b;
+      --danger-strong: #e7a698;
+      --danger-soft: #3a2621;
+      --focus: #4c8dff;
+      --badge-s: 55%;
+      --badge-l: 58%;
+      --badge-fg: #0b0c14;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 20px 44px -18px rgba(0, 0, 0, 0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a0b12;
+    --surface: #14151f;
+    --surface-2: #1b1d2a;
+    --border: #2a2d3d;
+    --border-strong: #3b3f54;
+    --text: #edeef5;
+    --text-muted: #a5a8ba;
+    --text-faint: #6e7186;
+    --accent: #4c8dff;
+    --accent-strong: #7cb0ff;
+    --accent-soft: #16234a;
+    --danger: #dd8b7b;
+    --danger-strong: #e7a698;
+    --danger-soft: #3a2621;
+    --focus: #4c8dff;
+    --badge-s: 55%;
+    --badge-l: 58%;
+    --badge-fg: #0b0c14;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 44px -18px rgba(0, 0, 0, 0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  button, input, select, textarea { font-family: inherit; color: inherit; }
+  ::selection { background: var(--accent-soft); color: var(--accent-strong); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+  .brand-stripe {
+    height: 4px;
+    flex: none;
+    background: linear-gradient(90deg, #000000 0%, #001062 34%, #0061ff 70%, #b3fbfb 100%);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .app-shell {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+  }
+  .sidebar {
+    width: 224px;
+    flex: none;
+    padding: 24px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    border-right: 1px solid var(--border);
+  }
+  .nav-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    padding: 0 10px;
+    margin: 0 0 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+  .nav-icon { width: 18px; height: 18px; flex: none; }
+  .page-area { flex: 1; min-width: 0; padding: 24px; }
+  .page-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    padding: 7px;
+    flex: none;
+  }
+  .brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .brand h1 {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .tagline { margin: 2px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+  .stats {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    margin: 0 0 14px;
+  }
+
+  .field {
+    position: relative;
+    flex: 1 1 260px;
+  }
+  .field svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-faint);
+    pointer-events: none;
+  }
+  input[type="search"], input[type="text"], input[type="number"], select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+  .search-field input { padding-left: 36px; }
+  select#systemFilter { flex: 0 1 220px; }
+  input::placeholder, textarea::placeholder { color: var(--text-faint); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-strong); }
+  .btn-secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--accent); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover:not(:disabled) { background: var(--danger-strong); }
+  .btn-ghost { background: transparent; color: var(--text-muted); }
+  .btn-ghost:hover:not(:disabled) { color: var(--text); }
+
+  .banner {
+    margin: 0 0 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    gap: 10px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .card:hover { box-shadow: var(--shadow-lg); border-color: var(--border-strong); transform: translateY(-1px); }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: hsl(var(--badge-h, 160) var(--badge-s) var(--badge-l));
+    color: var(--badge-fg);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-date { font-size: 0.72rem; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; flex: none; }
+  .card-title {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 1.02rem;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+  .card-title:hover { color: var(--accent); }
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.87rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+  .card-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-actions { display: flex; gap: 2px; }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+  .icon-btn.danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 72px 20px;
+    color: var(--text-muted);
+  }
+  .empty-icon {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .empty-state h2 { font-family: "IBM Plex Mono", monospace; font-size: 1.1rem; color: var(--text); margin-bottom: 6px; }
+  .empty-state p.empty-hint { margin: 14px auto 0; font-size: 0.76rem; color: var(--text-faint); max-width: 360px; }
+  .empty-state p { margin: 0 0 18px; font-size: 0.9rem; }
+
+  body.readonly .write-only { display: none !important; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 19, 16, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 640px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-panel.wide { max-width: 760px; }
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 { font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; font-weight: 600; }
+  .modal-body { padding: 18px 20px; overflow-y: auto; }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .modal-footer .footer-note { margin-right: auto; font-size: 0.82rem; color: var(--text-muted); }
+  .modal-footer .footer-error { margin-right: auto; font-size: 0.82rem; color: var(--danger); }
+
+  .form-row { margin-bottom: 14px; }
+  .form-row label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  textarea { resize: vertical; line-height: 1.5; }
+  textarea.mono { font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+
+  .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .detail-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; margin: 10px 0 16px; }
+  .code-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .code-toolbar span { font-size: 0.75rem; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+  .code-block {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    overflow: auto;
+    max-height: 42vh;
+  }
+  .code-block code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre;
+    color: var(--text);
+  }
+  .detail-footer-meta { font-size: 0.78rem; color: var(--text-faint); margin-top: 14px; }
+
+  .confirm-box {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .confirm-box p { margin: 0; font-size: 0.86rem; color: var(--text); }
+  .confirm-box .confirm-actions { display: flex; gap: 8px; flex: none; }
+
+  .toast-layer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 320px;
+  }
+  .toast.error { background: var(--danger); color: #fff; }
+
+  .site-footer {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 28px 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-faint);
+    font-size: 0.78rem;
+  }
+  .footer-logo { height: 13px; width: auto; opacity: 0.55; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .footer-logo { filter: invert(1); }
+  }
+  :root[data-theme="dark"] .footer-logo { filter: invert(1); }
+
+  .cron-page { display: flex; flex-direction: column; gap: 20px; max-width: 960px; }
+  .cron-intro h2 { font-family: "IBM Plex Mono", monospace; font-size: 1.3rem; margin-bottom: 6px; }
+  .cron-intro p { color: var(--text-muted); font-size: 0.92rem; margin: 0; }
+  .cron-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cron-preset-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  }
+  .cron-preset-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .cron-parse-row { display: flex; gap: 8px; }
+  .cron-parse-row .field { flex: 1; }
+  .cron-parse-error { color: var(--danger); font-size: 0.82rem; margin: 0; }
+  .cron-daytype { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cron-daytype-label { font-size: 0.82rem; color: var(--text-muted); }
+  .cron-daytype-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 3px; }
+  .cron-daytype-btn {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .cron-daytype-btn.active { background: var(--accent); color: #fff; }
+  .cron-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .cron-field-card.is-inactive { opacity: 0.55; }
+  .cron-field-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+  .cron-field-card h4 { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+  .cron-field-value { display: flex; flex-direction: column; gap: 8px; }
+  .cron-field-hint { margin: 0; color: var(--text-faint); font-size: 0.8rem; }
+  .cron-chip-grid { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto; padding: 2px; }
+  .cron-chip {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    font-family: "IBM Plex Mono", monospace;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .cron-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cron-inline-inputs { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; }
+  .cron-inline-inputs input[type="number"] { width: 72px; }
+  .cron-output-card, .cron-next-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .cron-output-text { font-size: 1.1rem; letter-spacing: 0.02em; }
+  .cron-description { margin: 10px 0 0; color: var(--text-muted); font-size: 0.88rem; }
+  .cron-next-card h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.95rem; margin: 0 0 10px; }
+  .cron-next-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .cron-next-list li {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 6px 10px;
+  }
+
+  .tool-page { display: flex; flex-direction: column; gap: 20px; max-width: 960px; }
+  .b64-mode-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .b64-mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 3px; }
+  .b64-mode-btn {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .b64-mode-btn.active { background: var(--accent); color: #fff; }
+  .b64-charset-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); }
+  .b64-charset-row select { width: auto; }
+  .b64-checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; }
+  .b64-checkbox-row input { width: auto; }
+  .b64-field-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .b64-field-card h4 { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+  .b64-textarea {
+    width: 100%;
+    min-height: 160px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    resize: vertical;
+    color: var(--text);
+  }
+  .b64-textarea:focus { border-color: var(--accent); }
+  .b64-stats { margin: 0; font-size: 0.78rem; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; }
+  .b64-error { color: var(--danger); font-size: 0.82rem; margin: 0; }
+
+  .tool-field-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tool-field-card h4 { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+  .sm-options { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sm-option-btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    flex: 1 1 220px;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .sm-option-btn:hover { border-color: var(--border-strong); }
+  .sm-option-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+  .sm-option-title { font-weight: 600; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; color: var(--text); }
+  .sm-option-btn.active .sm-option-title { color: var(--accent-strong); }
+  .sm-option-hint { font-size: 0.76rem; color: var(--text-faint); }
+  .sm-actions { display: flex; justify-content: flex-end; }
+  .sm-vars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .sm-var-field { display: flex; flex-direction: column; gap: 6px; }
+  .sm-var-field label { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+  .sm-filetype-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; transition: opacity 0.12s ease; }
+  .sm-filetype-label { font-size: 0.85rem; color: var(--text-muted); }
+  .sm-filetype-row.is-disabled { opacity: 0.45; }
+  .sm-filetype-row .b64-mode-btn:disabled { cursor: not-allowed; }
+  .tool-field-card.is-disabled { opacity: 0.45; transition: opacity 0.12s ease; }
+  .tool-field-card.is-disabled input, .tool-field-card.is-disabled textarea { cursor: not-allowed; }
+
+  .help-tip { position: relative; display: inline-flex; vertical-align: middle; margin-left: 2px; }
+  .help-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-family: "IBM Plex Mono", monospace;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    cursor: help;
+  }
+  .help-icon:hover, .help-icon:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .help-tip-box {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 10px);
+    transform: translateY(-50%) translateX(-4px);
+    width: 260px;
+    max-width: min(260px, calc(100vw - 40px));
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0.78rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.5;
+    padding: 8px 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    z-index: 30;
+  }
+  .help-tip-box::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: var(--text);
+  }
+  .help-tip:hover .help-tip-box, .help-icon:focus-visible + .help-tip-box {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  @media (max-width: 640px) {
+    .help-tip-box { left: 0; top: calc(100% + 8px); transform: translateY(4px); }
+    .help-tip-box::after { display: none; }
+    .help-tip:hover .help-tip-box, .help-icon:focus-visible + .help-tip-box { transform: translateY(0); }
+  }
+
+  @media (max-width: 640px) {
+    .form-two { grid-template-columns: 1fr; }
+    .topbar { padding: 14px 16px; }
+    .app-shell { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 10px 16px;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-section { display: contents; }
+    .nav-label { display: none; }
+    .nav-item { flex: none; white-space: nowrap; }
+    .page-area { padding: 16px; }
+  }
+</style>
+
+<div id="root"></div>
+
+<script id="init-data" type="application/json">{"scripts": [{"id": "s_recovered_lotescontabeis", "title": "Exclusão de lotes Contabeis", "system": "Tributos", "description": "Realiza a exclusão de todos os lotes contábeis disponíveis na entidade, sem distinção.\nNecessario executar somente 1 vez.", "script": "//Fonte de dados\nfonteIntegracoesContabeis = Dados.tributos.v2.integracoesContabeis\n\n//Filtro: só ARRECADACOES em HOMOLOGACAO\nfiltroIntegracoesContabeis = \"tipoIntegracao = 'ARRECADACOES' and situacao = 'EM_HOMOLOGACAO'\"\n\n// Monta lista com os itens que vamos excluir\npayload = []\n\ndadosIntegracoesContabeis = fonteIntegracoesContabeis.busca(criterio: filtroIntegracoesContabeis)\n\npercorrer (dadosIntegracoesContabeis) { itemIntegracoesContabeis ->\n  payload << [\n    \"idIntegracao\": \"INTEGRACAO \" + itemIntegracoesContabeis.id,\n    \"integracoesContabeis\": [\n      \"idGerado\": [\n        \"id\": itemIntegracoesContabeis.id\n      ]\n    ]\n  ]\n}\n\n// Quebra em lotes de no máximo 50 itens (exigência do endpoint)\npayload = payload.collate(50)\n\n// Se tiver algo pra excluir\nif (payload) {\n  payload.each { lote ->\n    servico = Http.servico(\"https://tributos.betha.cloud/service-layer-tributos/api/integracoesContabeis\")\n    .cabecalho(\"Content-Type\", \"application/json\")\n    .chaveIntegracao(Variavel.CHAVE_INTEGRACAO)\n    .DELETE(lote, Http.JSON)\n    \n    imprimir 'JSON: ' + servico.codigo() + ' - ' + servico.conteudo()\n  }\n} else {\n  imprimir \"Nenhuma integração encontrada para exclusão.\"\n}", "author": "Douglas Junkes", "createdAt": "2026-08-24T14:00:04.000Z", "updatedAt": "2026-08-24T14:00:04.000Z"}]}</script>
+
+<script id="app-js" type="text/plain">
+(function () {
+  "use strict";
+
+  var SYSTEMS = [
+    "Almoxarifado", "Cidadão Web", "Compras", "Conecta", "Contabilidade",
+    "e-Nota", "Fatura", "Folha", "Livro Eletrônico", "Obras",
+    "Patrimônio", "Ponto", "Procuradoria", "Protocolo", "Saúde",
+    "Tesouraria", "Transparência", "Tributos"
+  ];
+  var SYSTEM_FILTER_OPTIONS_HTML = SYSTEMS.map(function (sys) {
+    return '<option value="' + sys + '">' + sys + '</option>';
+  }).join('');
+  var SYSTEM_FORM_OPTIONS_HTML = '<option value="" disabled>Selecione um sistema</option>' + SYSTEM_FILTER_OPTIONS_HTML;
+  var LOGO_DATA_URI = "data:image/png;base64,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";
+  var SIMBOLO_DATA_URI = "data:image/png;base64,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";
+
+  var ROOT_SHELL_HTML =
+    '<div class="brand-stripe" aria-hidden="true"></div>' +
+    '<header class="topbar">' +
+      '<div class="topbar-inner">' +
+        '<div class="brand">' +
+          '<span class="brand-mark" aria-hidden="true"><img src="' + SIMBOLO_DATA_URI + '" alt="" /></span>' +
+          '<div><h1>Scriptorium Betha</h1><p class="tagline">repositorio de scripts da equipe</p></div>' +
+        '</div>' +
+      '</div>' +
+    '</header>' +
+    '<div class="app-shell">' +
+      '<nav class="sidebar" aria-label="Navegação">' +
+        '<div class="nav-section">' +
+          '<div class="nav-label">Arquivos</div>' +
+          '<button class="nav-item active" type="button" data-page="scripts" aria-current="page">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>' +
+            '<span>Reservatório Scripts</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apimaker">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 9 4 12 8 15"></polyline><polyline points="16 9 20 12 16 15"></polyline></svg>' +
+            '<span>Script Maker</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="cron">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>' +
+            '<span>CRON Expression Generator</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="base64">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 21l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>' +
+            '<span>Base 64 Decoder</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="nav-section">' +
+          '<div class="nav-label">Documentação</div>' +
+          '<button class="nav-item" type="button" data-page="bfcscript">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>BFC-Script</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apistributos">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>APIs Tributos</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apisprocuradoria">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>APIs Procuradoria</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apisenotafly">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>APIs E-nota Fly</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apisenotacloud">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>APIs E-nota Cloud</span>' +
+          '</button>' +
+          '<button class="nav-item" type="button" data-page="apilivroeletronico">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '<span>API Livro Eletrônico Cloud</span>' +
+          '</button>' +
+        '</div>' +
+      '</nav>' +
+      '<main class="page-area">' +
+        '<section class="page" id="page-scripts">' +
+          '<div class="page-toolbar">' +
+            '<div class="field search-field">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>' +
+              '<input type="search" id="searchInput" placeholder="Buscar por titulo ou descricao" aria-label="Buscar por titulo ou descricao" />' +
+            '</div>' +
+            '<select id="systemFilter" aria-label="Filtrar por sistema"><option value="">Todos os sistemas</option>' + SYSTEM_FILTER_OPTIONS_HTML + '</select>' +
+            '<button class="btn btn-primary write-only" id="addBtn" type="button">+ Novo script</button>' +
+          '</div>' +
+          '<div class="banner write-only-hide" id="readonlyBanner" hidden>Modo somente leitura: voce pode buscar e visualizar, mas nao pode salvar alteracoes neste visualizador.</div>' +
+          '<div class="stats" id="stats"></div>' +
+          '<div class="grid" id="grid"></div>' +
+          '<div class="empty-state" id="emptyState" hidden>' +
+            '<div class="empty-icon" aria-hidden="true">&lt;/&gt;</div>' +
+            '<h2 id="emptyTitle">Nenhum script por aqui ainda</h2>' +
+            '<p id="emptyText">Adicione o primeiro script para comecar o repositorio da equipe.</p>' +
+            '<button class="btn btn-primary write-only" id="emptyActionBtn" type="button">+ Novo script</button>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apimaker" hidden>' +
+          '<div class="tool-page">' +
+            '<div class="cron-intro">' +
+              '<h2>Script Maker</h2>' +
+              '<p>Cole a consulta base em BFC-Script, escolha o tipo de geracao desejado e clique em Gerar. O comportamento de cada tipo de geracao ainda sera definido - por enquanto esta e a estrutura da pagina.</p>' +
+            '</div>' +
+            '<div class="tool-field-card">' +
+              '<h4>Consulta (BFC-Script) <span class="help-tip">' +
+                '<button type="button" class="help-icon" aria-describedby="smQueryHelp">?</button>' +
+                '<span class="help-tip-box" id="smQueryHelp" role="tooltip">Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script.</span>' +
+              '</span></h4>' +
+              '<textarea class="b64-textarea" id="smQueryInput" placeholder="Cole aqui a consulta, por exemplo:&#10;fonteImoveis = Dados.tributos.v2.imoveis;&#10;filtroImoveis = &quot;situacao = &apos;ATIVADO&apos;&quot;&#10;dadosImoveis = fonteImoveis.busca(criterio: filtroImoveis, campos: &quot;id&quot;)&#10;percorrer (dadosImoveis) { itemImoveis -&gt;&#10;  id = itemImoveis.id&#10;}" spellcheck="false"></textarea>' +
+            '</div>' +
+            '<div class="tool-field-card">' +
+              '<h4>Variaveis</h4>' +
+              '<p class="sm-option-hint">Informe as variaveis presentes na consulta que serao utilizadas na geracao do script.</p>' +
+              '<div class="sm-vars-grid">' +
+                '<div class="sm-var-field"><label for="smVar1">Variavel 1</label><input type="text" id="smVar1" placeholder="Nome da variavel" /></div>' +
+                '<div class="sm-var-field"><label for="smVar2">Variavel 2</label><input type="text" id="smVar2" placeholder="Nome da variavel" /></div>' +
+                '<div class="sm-var-field"><label for="smVar3">Variavel 3</label><input type="text" id="smVar3" placeholder="Nome da variavel" /></div>' +
+                '<div class="sm-var-field"><label for="smVar4">Variavel 4</label><input type="text" id="smVar4" placeholder="Nome da variavel" /></div>' +
+                '<div class="sm-var-field"><label for="smVar5">Variavel 5</label><input type="text" id="smVar5" placeholder="Nome da variavel" /></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="tool-field-card">' +
+              '<h4>Tipo de geracao</h4>' +
+              '<div class="sm-options" id="smOptions"></div>' +
+              '<div class="sm-filetype-row" id="smFileTypeRow">' +
+                '<span class="sm-filetype-label">Tipo de retorno</span>' +
+                '<div class="b64-mode-toggle" id="smFileTypeToggle">' +
+                  '<button type="button" class="b64-mode-btn active" data-filetype="txt">TXT</button>' +
+                  '<button type="button" class="b64-mode-btn" data-filetype="csv">CSV</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="tool-field-card" id="smApiCard">' +
+              '<h4>Configuracao da API</h4>' +
+              '<div class="sm-var-field">' +
+                '<label>Modo de integracao</label>' +
+                '<div class="b64-mode-toggle" id="smApiModeToggle">' +
+                  '<button type="button" class="b64-mode-btn active" data-apimode="single">Registro unico</button>' +
+                  '<button type="button" class="b64-mode-btn" data-apimode="lote">Lote de IDs</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="sm-var-field" id="smApiListVarField" hidden>' +
+                '<label for="smApiListVar">Variavel de saida (lista de IDs)</label>' +
+                '<input type="text" id="smApiListVar" placeholder="Ex: idsAlvo" />' +
+              '</div>' +
+              '<div class="sm-var-field">' +
+                '<label for="smApiUrl">URL API</label>' +
+                '<input type="text" id="smApiUrl" placeholder="https://tributos.betha.cloud/service-layer-tributos/api/imoveis" />' +
+              '</div>' +
+              '<div class="sm-var-field">' +
+                '<label for="smApiMethod">Tipo de movimentacao</label>' +
+                '<select id="smApiMethod">' +
+                  '<option value="POST" selected>POST</option>' +
+                  '<option value="PUT">PUT</option>' +
+                  '<option value="PATCH">PATCH</option>' +
+                  '<option value="DELETE">DELETE</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="sm-var-field">' +
+                '<label for="smApiParams">Parametros (JSON)</label>' +
+                '<textarea class="b64-textarea" id="smApiParams" placeholder="Cole aqui um JSON de exemplo do payload esperado pela API, ex:&#10;[&#10;  {&#10;    &quot;idIntegracao&quot;: &quot;INTEGRACAO1&quot;,&#10;    &quot;imoveis&quot;: {&#10;      &quot;idGerado&quot;: { &quot;id&quot;: 1 },&#10;      &quot;idBairro&quot;: 1,&#10;      &quot;bloco&quot;: &quot;A&quot;&#10;    }&#10;  }&#10;]" spellcheck="false"></textarea>' +
+              '</div>' +
+            '</div>' +
+            '<div class="sm-actions">' +
+              '<button class="btn btn-primary" type="button" id="smGenerateBtn">Gerar</button>' +
+            '</div>' +
+            '<div class="tool-field-card">' +
+              '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
+              '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar.</code></div>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-cron" hidden>' +
+          '<div class="cron-page">' +
+            '<div class="cron-intro">' +
+              '<h2>CRON Expression Generator</h2>' +
+              '<p>Monte, valide e entenda expressoes cron no formato Quartz (7 campos: segundo minuto hora dia-do-mes mes dia-da-semana ano), compativel com agendadores Java/Quartz. Escolha um preset, ajuste os campos ou cole uma expressao existente.</p>' +
+            '</div>' +
+            '<div class="cron-presets" id="cronPresets"></div>' +
+            '<div class="cron-parse-row">' +
+              '<div class="field">' +
+                '<input type="text" id="cronParseInput" placeholder="Cole uma expressao cron existente, ex: 0 0/30 * 1/1 * ? *" />' +
+              '</div>' +
+              '<button class="btn btn-secondary" type="button" id="cronParseBtn">Aplicar</button>' +
+            '</div>' +
+            '<p class="cron-parse-error" id="cronParseError" hidden></p>' +
+            '<div class="cron-daytype">' +
+              '<span class="cron-daytype-label">Restringir dia por:</span>' +
+              '<div class="cron-daytype-toggle" id="cronDayTypeToggle"></div>' +
+            '</div>' +
+            '<div class="cron-fields" id="cronFields"></div>' +
+            '<div class="cron-output-card">' +
+              '<div class="code-toolbar"><span>Expressao cron</span><button class="btn btn-secondary" type="button" id="cronCopyBtn">Copiar</button></div>' +
+              '<div class="code-block"><code id="cronOutput" class="cron-output-text"></code></div>' +
+              '<p class="cron-description" id="cronDescription"></p>' +
+            '</div>' +
+            '<div class="cron-next-card">' +
+              '<h3>Proximas execucoes</h3>' +
+              '<ul class="cron-next-list" id="cronNextRuns"></ul>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-base64" hidden>' +
+          '<div class="tool-page">' +
+            '<div class="cron-intro">' +
+              '<h2>Base 64 Decoder</h2>' +
+              '<p>Decodifique ou codifique textos em Base64 diretamente no navegador. Nada e enviado para fora - o processamento acontece localmente.</p>' +
+            '</div>' +
+            '<div class="b64-mode-row">' +
+              '<div class="b64-mode-toggle" id="b64ModeToggle"></div>' +
+              '<button class="btn btn-secondary" type="button" id="b64SwapBtn">Trocar entrada/saida</button>' +
+            '</div>' +
+            '<div class="b64-charset-row">' +
+              '<label for="b64Charset">Codificacao de caracteres:</label>' +
+              '<select id="b64Charset"><option value="utf-8">UTF-8</option><option value="latin1">ISO-8859-1 (Latin1)</option></select>' +
+              '<label class="b64-checkbox-row"><input type="checkbox" id="b64UrlSafe" /> Base64 URL-safe (- e _)</label>' +
+            '</div>' +
+            '<div class="b64-field-card">' +
+              '<h4 id="b64InputLabel">Texto em Base64</h4>' +
+              '<textarea class="b64-textarea" id="b64Input" placeholder="Cole aqui o texto em Base64" spellcheck="false"></textarea>' +
+              '<p class="b64-error" id="b64Error" hidden></p>' +
+            '</div>' +
+            '<div class="b64-field-card">' +
+              '<div class="code-toolbar"><span id="b64OutputLabel">Resultado decodificado</span><button class="btn btn-secondary" type="button" id="b64CopyBtn">Copiar</button></div>' +
+              '<textarea class="b64-textarea" id="b64Output" readonly spellcheck="false"></textarea>' +
+              '<p class="b64-stats" id="b64Stats"></p>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-bfcscript" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>BFC-Script</h2>' +
+            '<p>Documentação oficial da linguagem BFC-Script (stack de desenvolvimento Dubai).</p>' +
+            '<a class="btn btn-primary" href="https://test.betha.com.br/documentacao/bfc-script/2.16.X/" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apistributos" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>APIs Tributos</h2>' +
+            '<p>API Service layer da Arrecadação (documentação técnica de migração).</p>' +
+            '<a class="btn btn-primary" href="https://arrecadacao.ajuda.betha.cloud/tributos/conteudostecnicos/migracao/" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apisprocuradoria" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>APIs Procuradoria</h2>' +
+            '<p>Serviços de migração da Arrecadação (documentação técnica de migração).</p>' +
+            '<a class="btn btn-primary" href="https://arrecadacao.ajuda.betha.cloud/procuradoria/conteudostecnicos/migracao" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apisenotafly" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>APIs E-nota Fly</h2>' +
+            '<p>Documentação técnica (Swagger UI) das APIs do E-nota Fly.</p>' +
+            '<a class="btn btn-primary" href="https://swagger.plataforma.betha.cloud/?configUrl=https://52sn0onf7i.execute-api.us-east-1.amazonaws.com/prod/apiDocumentation?grupo%3Dservice-layer-arrecadacao#/" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apisenotacloud" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>APIs E-nota Cloud</h2>' +
+            '<p>Documentação técnica (Swagger UI) das APIs do E-nota Cloud.</p>' +
+            '<a class="btn btn-primary" href="https://swagger.plataforma.betha.cloud/?configUrl=https://52sn0onf7i.execute-api.us-east-1.amazonaws.com/prod/apiDocumentation?grupo%3Dnfse-api-sl#/notas-fiscais/patch_notas_fiscais" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-apilivroeletronico" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>API Livro Eletrônico Cloud</h2>' +
+            '<p>Documentação técnica (Swagger UI) da API Livro Eletrônico Cloud.</p>' +
+            '<a class="btn btn-primary" href="https://swagger.plataforma.betha.cloud/?configUrl=https://52sn0onf7i.execute-api.us-east-1.amazonaws.com/test/apiDocumentation?grupo%3Dapi-le-service-layer#/" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba. O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+      '</main>' +
+    '</div>' +
+    '<footer class="site-footer">' +
+      '<img class="footer-logo" src="' + LOGO_DATA_URI + '" alt="Betha" />' +
+      '<span>repositório interno de scripts</span>' +
+    '</footer>' +
+    '<div id="modalLayer"></div>' +
+    '<div class="toast-layer" id="toastLayer"></div>';
+
+  var BOOTSTRAP_SRC = "(function(){var e=document.getElementById('app-js');var s=document.createElement('script');s.textContent=e.textContent;document.body.appendChild(s);})();";
+
+  var scripts = [];
+  var filterText = "";
+  var filterSystem = "";
+  var capability = null;
+  var writable = true;
+  var lastFocused = null;
+
+  function qs(sel, root) { return (root || document).querySelector(sel); }
+  function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function el(tag, attrs, text) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (Object.prototype.hasOwnProperty.call(attrs, k)) node.setAttribute(k, attrs[k]);
+      }
+    }
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+  function normalize(str) {
+    try {
+      return String(str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    } catch (e) {
+      return String(str || "").toLowerCase();
+    }
+  }
+  function fmtDate(iso) {
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    } catch (e) { return ""; }
+  }
+  function makeId() {
+    return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function hueFor(str) {
+    var s = String(str || "");
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 360; if (h < 0) h += 360; }
+    return h;
+  }
+  function escapeCloseScript(str) {
+    return String(str).replace(/<\//g, "<\\/");
+  }
+  function getAuthorDefault() {
+    try { return localStorage.getItem("scriptorio_author") || ""; } catch (e) { return ""; }
+  }
+  function setAuthorDefault(name) {
+    try { localStorage.setItem("scriptorio_author", name || ""); } catch (e) {}
+  }
+
+  function showToast(message, variant) {
+    var layer = qs("#toastLayer");
+    if (!layer) return;
+    var t = el("div", { "class": "toast" + (variant === "error" ? " error" : "") }, message);
+    layer.appendChild(t);
+    setTimeout(function () {
+      if (t.parentNode) t.parentNode.removeChild(t);
+    }, 4200);
+  }
+
+  function showReadonlyBanner() {
+    document.body.classList.add("readonly");
+    var b = qs("#readonlyBanner");
+    if (b) b.hidden = false;
+  }
+
+  function uniqueSystems() {
+    var set = {};
+    scripts.forEach(function (s) { if (s.system) set[s.system] = true; });
+    return Object.keys(set).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); });
+  }
+
+  function filteredScripts() {
+    var ft = normalize(filterText);
+    return scripts.filter(function (s) {
+      if (filterSystem && s.system !== filterSystem) return false;
+      if (!ft) return true;
+      return normalize(s.title).indexOf(ft) !== -1 || normalize(s.description).indexOf(ft) !== -1;
+    }).sort(function (a, b) { return (b.updatedAt || "").localeCompare(a.updatedAt || ""); });
+  }
+
+  function buildCard(s) {
+    var card = el("article", { "class": "card" });
+
+    var top = el("div", { "class": "card-top" });
+    var badge = el("span", { "class": "badge" }, s.system);
+    badge.style.setProperty("--badge-h", String(hueFor(s.system)));
+    top.appendChild(badge);
+    top.appendChild(el("span", { "class": "card-date" }, fmtDate(s.updatedAt || s.createdAt)));
+    card.appendChild(top);
+
+    var title = el("h3", { "class": "card-title", tabindex: "0", role: "button" }, s.title);
+    title.addEventListener("click", function () { openDetail(s.id); });
+    title.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(s.id); } });
+    card.appendChild(title);
+
+    card.appendChild(el("p", { "class": "card-desc" }, s.description || ""));
+
+    var footer = el("div", { "class": "card-footer" });
+    var viewBtn = el("button", { "class": "card-link", type: "button" }, "Ver script ->");
+    viewBtn.addEventListener("click", function () { openDetail(s.id); });
+    footer.appendChild(viewBtn);
+
+    var actions = el("div", { "class": "card-actions write-only" });
+    var editBtn = el("button", { "class": "icon-btn", type: "button", title: "Editar", "aria-label": "Editar" }, "✎");
+    editBtn.addEventListener("click", function () { openForm(s.id); });
+    var delBtn = el("button", { "class": "icon-btn danger", type: "button", title: "Excluir", "aria-label": "Excluir" }, "✕");
+    delBtn.addEventListener("click", function () { openDetail(s.id, true); });
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    footer.appendChild(actions);
+
+    card.appendChild(footer);
+    return card;
+  }
+
+  function renderGrid() {
+    var grid = qs("#grid");
+    var emptyState = qs("#emptyState");
+    var stats = qs("#stats");
+    if (!grid) return;
+    grid.innerHTML = "";
+    var list = filteredScripts();
+
+    if (stats) {
+      var sysCount = uniqueSystems().length;
+      stats.textContent = scripts.length + (scripts.length === 1 ? " script" : " scripts") + " - " + sysCount + (sysCount === 1 ? " sistema" : " sistemas");
+    }
+
+    if (list.length === 0) {
+      grid.hidden = true;
+      if (emptyState) {
+        emptyState.hidden = false;
+        var titleEl = qs("#emptyTitle");
+        var textEl = qs("#emptyText");
+        var actionBtn = qs("#emptyActionBtn");
+        if (scripts.length === 0) {
+          if (titleEl) titleEl.textContent = "Nenhum script por aqui ainda";
+          if (textEl) textEl.textContent = "Adicione o primeiro script para comecar o repositorio da equipe.";
+          if (actionBtn) { actionBtn.textContent = "+ Novo script"; actionBtn.className = "btn btn-primary write-only"; actionBtn.onclick = function () { openForm(null); }; }
+        } else {
+          if (titleEl) titleEl.textContent = "Nenhum resultado encontrado";
+          if (textEl) textEl.textContent = "Tente ajustar a busca ou o filtro de sistema.";
+          if (actionBtn) { actionBtn.textContent = "Limpar filtros"; actionBtn.className = "btn btn-secondary"; actionBtn.onclick = function () { clearFilters(); }; }
+        }
+      }
+    } else {
+      grid.hidden = false;
+      if (emptyState) emptyState.hidden = true;
+      list.forEach(function (s) { grid.appendChild(buildCard(s)); });
+    }
+  }
+
+  function clearFilters() {
+    filterText = "";
+    filterSystem = "";
+    var si = qs("#searchInput"); if (si) si.value = "";
+    var sf = qs("#systemFilter"); if (sf) sf.value = "";
+    renderGrid();
+  }
+
+  function closeModal() {
+    var layer = qs("#modalLayer");
+    if (layer) layer.innerHTML = "";
+    if (lastFocused && lastFocused.focus) { try { lastFocused.focus(); } catch (e) {} }
+  }
+
+  function onOverlayKeydown(e) {
+    if (e.key === "Escape") closeModal();
+  }
+
+  function openForm(id) {
+    if (!writable) { showToast("Este repositorio esta em modo somente leitura para voce.", "error"); return; }
+    lastFocused = document.activeElement;
+    var existing = id ? scripts.filter(function (s) { return s.id === id; })[0] : null;
+    var layer = qs("#modalLayer");
+    layer.innerHTML = "";
+
+    var overlay = el("div", { "class": "modal-overlay", role: "presentation" });
+    overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener("keydown", onOverlayKeydown);
+
+    var panel = el("div", { "class": "modal-panel wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "formTitle" });
+
+    var header = el("div", { "class": "modal-header" });
+    header.appendChild(el("h2", { id: "formTitle" }, existing ? "Editar script" : "Novo script"));
+    var closeBtn = el("button", { "class": "icon-btn", type: "button", "aria-label": "Fechar" }, "✕");
+    closeBtn.addEventListener("click", closeModal);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    var body = el("div", { "class": "modal-body" });
+    var form = el("form", { id: "scriptForm" });
+
+    var rowTitle = el("div", { "class": "form-row" });
+    rowTitle.appendChild(el("label", { "for": "f-title" }, "Titulo"));
+    var titleInput = el("input", { type: "text", id: "f-title", required: "required", maxlength: "140" });
+    titleInput.value = existing ? existing.title : "";
+    rowTitle.appendChild(titleInput);
+    form.appendChild(rowTitle);
+
+    var rowTwo = el("div", { "class": "form-two" });
+
+    var rowSystem = el("div", { "class": "form-row" });
+    rowSystem.appendChild(el("label", { "for": "f-system" }, "Sistema"));
+    var sysInput = el("select", { id: "f-system", required: "required" });
+    sysInput.innerHTML = SYSTEM_FORM_OPTIONS_HTML;
+    if (existing && SYSTEMS.indexOf(existing.system) === -1 && existing.system) {
+      sysInput.appendChild(el("option", { value: existing.system }, existing.system));
+    }
+    sysInput.value = existing ? existing.system : "";
+    rowSystem.appendChild(sysInput);
+    rowTwo.appendChild(rowSystem);
+
+    var rowAuthor = el("div", { "class": "form-row" });
+    rowAuthor.appendChild(el("label", { "for": "f-author" }, "Seu nome (opcional)"));
+    var authorInput = el("input", { type: "text", id: "f-author", maxlength: "60" });
+    authorInput.value = existing ? (existing.author || "") : getAuthorDefault();
+    rowAuthor.appendChild(authorInput);
+    rowTwo.appendChild(rowAuthor);
+
+    form.appendChild(rowTwo);
+
+    var rowDesc = el("div", { "class": "form-row" });
+    rowDesc.appendChild(el("label", { "for": "f-desc" }, "Descricao"));
+    var descInput = el("textarea", { id: "f-desc", rows: "3", required: "required", maxlength: "600" });
+    descInput.value = existing ? existing.description : "";
+    rowDesc.appendChild(descInput);
+    form.appendChild(rowDesc);
+
+    var rowScript = el("div", { "class": "form-row" });
+    rowScript.appendChild(el("label", { "for": "f-script" }, "Script"));
+    var scriptInput = el("textarea", { id: "f-script", "class": "mono", rows: "14", required: "required", spellcheck: "false" });
+    scriptInput.value = existing ? existing.script : "";
+    rowScript.appendChild(scriptInput);
+    form.appendChild(rowScript);
+
+    body.appendChild(form);
+    panel.appendChild(body);
+
+    var footer = el("div", { "class": "modal-footer" });
+    var errNote = el("span", { "class": "footer-error", id: "formError" });
+    errNote.hidden = true;
+    footer.appendChild(errNote);
+    var cancelBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Cancelar");
+    cancelBtn.addEventListener("click", closeModal);
+    var saveBtn = el("button", { "class": "btn btn-primary", type: "submit", form: "scriptForm" }, existing ? "Salvar alteracoes" : "Adicionar script");
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    layer.appendChild(overlay);
+    titleInput.focus();
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var title = titleInput.value.trim();
+      var system = sysInput.value.trim();
+      var description = descInput.value.trim();
+      var scriptText = scriptInput.value;
+      var author = authorInput.value.trim();
+
+      if (!title || !system || !scriptText.trim()) {
+        errNote.textContent = "Preencha titulo, sistema e script.";
+        errNote.hidden = false;
+        return;
+      }
+      errNote.hidden = true;
+      setAuthorDefault(author);
+
+      var now = new Date().toISOString();
+      var next = scripts.slice();
+      if (existing) {
+        next = next.map(function (s) {
+          if (s.id !== existing.id) return s;
+          return {
+            id: s.id, title: title, system: system, description: description,
+            script: scriptText, author: author || s.author || "", createdAt: s.createdAt, updatedAt: now
+          };
+        });
+      } else {
+        next.push({
+          id: makeId(), title: title, system: system, description: description,
+          script: scriptText, author: author, createdAt: now, updatedAt: now
+        });
+      }
+
+      saveBtn.disabled = true; cancelBtn.disabled = true;
+      saveBtn.textContent = "Salvando...";
+      publishScripts(next, {
+        onError: function (msg) {
+          saveBtn.disabled = false; cancelBtn.disabled = false;
+          saveBtn.textContent = existing ? "Salvar alteracoes" : "Adicionar script";
+          errNote.textContent = msg;
+          errNote.hidden = false;
+        }
+      });
+    });
+  }
+
+  function openDetail(id, confirmDelete) {
+    var s = scripts.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    lastFocused = document.activeElement;
+    var layer = qs("#modalLayer");
+    layer.innerHTML = "";
+
+    var overlay = el("div", { "class": "modal-overlay", role: "presentation" });
+    overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener("keydown", onOverlayKeydown);
+
+    var panel = el("div", { "class": "modal-panel wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "detailTitle" });
+
+    var header = el("div", { "class": "modal-header" });
+    header.appendChild(el("h2", { id: "detailTitle" }, s.title));
+    var closeBtn = el("button", { "class": "icon-btn", type: "button", "aria-label": "Fechar" }, "✕");
+    closeBtn.addEventListener("click", closeModal);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    var body = el("div", { "class": "modal-body" });
+    var meta = el("div", { "class": "detail-meta" });
+    var badge = el("span", { "class": "badge" }, s.system);
+    badge.style.setProperty("--badge-h", String(hueFor(s.system)));
+    meta.appendChild(badge);
+    meta.appendChild(el("span", { "class": "card-date" }, "Atualizado em " + fmtDate(s.updatedAt || s.createdAt)));
+    body.appendChild(meta);
+    body.appendChild(el("p", { "class": "detail-desc" }, s.description || "Sem descricao."));
+
+    var codeToolbar = el("div", { "class": "code-toolbar" });
+    codeToolbar.appendChild(el("span", {}, "Script"));
+    var copyBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Copiar");
+    copyBtn.addEventListener("click", function () {
+      var text = s.script;
+      var done = function () { copyBtn.textContent = "Copiado!"; setTimeout(function () { copyBtn.textContent = "Copiar"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+    codeToolbar.appendChild(copyBtn);
+    body.appendChild(codeToolbar);
+
+    var codeBlock = el("div", { "class": "code-block" });
+    var codeEl = el("code");
+    codeEl.textContent = s.script;
+    codeBlock.appendChild(codeEl);
+    body.appendChild(codeBlock);
+
+    var footerMetaParts = [];
+    if (s.author) footerMetaParts.push("Adicionado por " + s.author);
+    footerMetaParts.push("criado em " + fmtDate(s.createdAt));
+    body.appendChild(el("p", { "class": "detail-footer-meta" }, footerMetaParts.join(" - ")));
+
+    panel.appendChild(body);
+
+    var footer = el("div", { "class": "modal-footer write-only" });
+    var deleteArea = el("div", { style: "width:100%" });
+
+    function renderDeleteArea(showConfirm) {
+      deleteArea.innerHTML = "";
+      if (!showConfirm) {
+        var wrap = el("div", { style: "display:flex; justify-content:flex-end; gap:8px; width:100%" });
+        var editBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Editar");
+        editBtn.addEventListener("click", function () { closeModal(); openForm(s.id); });
+        var delBtn = el("button", { "class": "btn btn-danger", type: "button" }, "Excluir");
+        delBtn.addEventListener("click", function () { renderDeleteArea(true); });
+        wrap.appendChild(editBtn);
+        wrap.appendChild(delBtn);
+        deleteArea.appendChild(wrap);
+      } else {
+        var box = el("div", { "class": "confirm-box" });
+        box.appendChild(el("p", {}, "Excluir este script definitivamente?"));
+        var actions = el("div", { "class": "confirm-actions" });
+        var cancel = el("button", { "class": "btn btn-secondary", type: "button" }, "Cancelar");
+        cancel.addEventListener("click", function () { renderDeleteArea(false); });
+        var confirmBtn = el("button", { "class": "btn btn-danger", type: "button" }, "Sim, excluir");
+        confirmBtn.addEventListener("click", function () {
+          confirmBtn.disabled = true; cancel.disabled = true;
+          confirmBtn.textContent = "Excluindo...";
+          var next = scripts.filter(function (x) { return x.id !== s.id; });
+          publishScripts(next, {
+            onError: function (msg) {
+              confirmBtn.disabled = false; cancel.disabled = false;
+              confirmBtn.textContent = "Sim, excluir";
+              showToast(msg, "error");
+            }
+          });
+        });
+        actions.appendChild(cancel);
+        actions.appendChild(confirmBtn);
+        box.appendChild(actions);
+        deleteArea.appendChild(box);
+      }
+    }
+    renderDeleteArea(!!confirmDelete);
+    footer.appendChild(deleteArea);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    layer.appendChild(overlay);
+    closeBtn.focus();
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (e) {
+      showToast("Nao foi possivel copiar automaticamente. Selecione o texto manualmente.", "error");
+    }
+  }
+
+  var CRON_FIELDS = [
+    { key: "second", label: "Segundo", min: 0, max: 59, everyLabel: "Todo segundo" },
+    { key: "minute", label: "Minuto", min: 0, max: 59, everyLabel: "Todo minuto" },
+    { key: "hour", label: "Hora", min: 0, max: 23, everyLabel: "Toda hora" },
+    { key: "dom", label: "Dia do mes", min: 1, max: 31, everyLabel: "Todo dia do mes", dayField: true },
+    { key: "month", label: "Mes", min: 1, max: 12, everyLabel: "Todo mes", names: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] },
+    { key: "dow", label: "Dia da semana", min: 1, max: 7, everyLabel: "Todo dia da semana", names: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"], dayField: true },
+    { key: "year", label: "Ano", min: 2026, max: 2046, everyLabel: "Todo ano" }
+  ];
+  var cronState = null;
+  var cronDayType = "dom";
+
+  function pad2(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
+  function clampInt(v, min, max) { if (isNaN(v)) return min; return Math.max(min, Math.min(max, v)); }
+  function joinList(arr) {
+    if (!arr.length) return "";
+    if (arr.length === 1) return String(arr[0]);
+    return arr.slice(0, -1).join(", ") + " e " + arr[arr.length - 1];
+  }
+  function fieldByKey(key) {
+    for (var i = 0; i < CRON_FIELDS.length; i++) { if (CRON_FIELDS[i].key === key) return CRON_FIELDS[i]; }
+    return null;
+  }
+
+  function defaultCronFieldState(fieldDef) {
+    return {
+      mode: "every",
+      specific: [],
+      range: { from: fieldDef.min, to: fieldDef.min },
+      increment: { start: fieldDef.min, step: fieldDef.key === "second" || fieldDef.key === "minute" ? 15 : 5 }
+    };
+  }
+
+  function initCronState() {
+    var now = new Date();
+    var yearField = fieldByKey("year");
+    yearField.min = now.getFullYear();
+    yearField.max = now.getFullYear() + 20;
+    cronState = {};
+    CRON_FIELDS.forEach(function (f) { cronState[f.key] = defaultCronFieldState(f); });
+    cronDayType = "dom";
+  }
+
+  var CRON_PRESETS = [
+    {
+      label: "A cada minuto", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+      }
+    },
+    {
+      label: "A cada 15 minutos", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "increment"; cronState.minute.increment = { start: 0, step: 15 };
+      }
+    },
+    {
+      label: "A cada hora", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "specific"; cronState.minute.specific = [0];
+      }
+    },
+    {
+      label: "Diariamente a meia-noite", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "specific"; cronState.minute.specific = [0];
+        cronState.hour.mode = "specific"; cronState.hour.specific = [0];
+      }
+    },
+    {
+      label: "Dias uteis as 9h", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "specific"; cronState.minute.specific = [0];
+        cronState.hour.mode = "specific"; cronState.hour.specific = [9];
+        cronDayType = "dow";
+        cronState.dow.mode = "range"; cronState.dow.range = { from: 2, to: 6 };
+      }
+    },
+    {
+      label: "Semanalmente (domingo)", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "specific"; cronState.minute.specific = [0];
+        cronState.hour.mode = "specific"; cronState.hour.specific = [0];
+        cronDayType = "dow";
+        cronState.dow.mode = "specific"; cronState.dow.specific = [1];
+      }
+    },
+    {
+      label: "Mensalmente (dia 1)", apply: function () {
+        initCronState();
+        cronState.second.mode = "specific"; cronState.second.specific = [0];
+        cronState.minute.mode = "specific"; cronState.minute.specific = [0];
+        cronState.hour.mode = "specific"; cronState.hour.specific = [0];
+        cronDayType = "dom";
+        cronState.dom.mode = "specific"; cronState.dom.specific = [1];
+      }
+    }
+  ];
+
+  function buildFieldExpr(fieldDef, fstate) {
+    if (fstate.mode === "specific") {
+      var vals = (fstate.specific || []).slice().sort(function (a, b) { return a - b; });
+      if (!vals.length) return "*";
+      return vals.join(",");
+    }
+    if (fstate.mode === "range") {
+      var from = clampInt(fstate.range.from, fieldDef.min, fieldDef.max);
+      var to = clampInt(fstate.range.to, fieldDef.min, fieldDef.max);
+      if (from > to) { var tmp = from; from = to; to = tmp; }
+      return from + "-" + to;
+    }
+    if (fstate.mode === "increment") {
+      var start = clampInt(fstate.increment.start, fieldDef.min, fieldDef.max);
+      var step = Math.max(1, fstate.increment.step || 1);
+      return start + "/" + step;
+    }
+    return "*";
+  }
+
+  function fieldExprFor(f) {
+    if (f.key === "dom" && cronDayType !== "dom") return "?";
+    if (f.key === "dow" && cronDayType !== "dow") return "?";
+    return buildFieldExpr(f, cronState[f.key]);
+  }
+
+  function parseFieldToSet(expr, min, max) {
+    var set = {};
+    var parts = String(expr == null ? "" : expr).trim().split(",");
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (!part) continue;
+      var stepMatch = part.match(/^(\*|\d+-\d+|\d+)\/(\d+)$/);
+      var base, step;
+      if (stepMatch) { base = stepMatch[1]; step = parseInt(stepMatch[2], 10) || 1; }
+      else { base = part; step = 1; }
+      var rangeMatch = base.match(/^(\d+)-(\d+)$/);
+      var start, end;
+      if (base === "*") { start = min; end = max; }
+      else if (rangeMatch) { start = parseInt(rangeMatch[1], 10); end = parseInt(rangeMatch[2], 10); }
+      else if (/^\d+$/.test(base)) { start = end = parseInt(base, 10); if (stepMatch) end = max; }
+      else { continue; }
+      if (start > end) { var t = start; start = end; end = t; }
+      for (var v = start; v <= end; v += step) { if (v >= min && v <= max) set[v] = true; }
+    }
+    var out = [];
+    for (var k in set) { if (Object.prototype.hasOwnProperty.call(set, k)) out.push(parseInt(k, 10)); }
+    out.sort(function (a, b) { return a - b; });
+    return out;
+  }
+
+  function classifyFieldExpr(expr, min, max) {
+    expr = String(expr == null ? "" : expr).trim();
+    var st = { mode: "every", specific: [], range: { from: min, to: min }, increment: { start: min, step: 5 } };
+    if (expr === "*" || expr === "" || expr === "?") { st.mode = "every"; return st; }
+    var incAll = expr.match(/^\*\/(\d+)$/);
+    if (incAll) { st.mode = "increment"; st.increment = { start: min, step: Math.max(1, parseInt(incAll[1], 10)) }; return st; }
+    var incStart = expr.match(/^(\d+)\/(\d+)$/);
+    if (incStart) {
+      st.mode = "increment";
+      st.increment = { start: clampInt(parseInt(incStart[1], 10), min, max), step: Math.max(1, parseInt(incStart[2], 10)) };
+      return st;
+    }
+    var range = expr.match(/^(\d+)-(\d+)$/);
+    if (range && expr.indexOf(",") === -1) {
+      st.mode = "range";
+      st.range = { from: clampInt(parseInt(range[1], 10), min, max), to: clampInt(parseInt(range[2], 10), min, max) };
+      return st;
+    }
+    st.mode = "specific";
+    st.specific = parseFieldToSet(expr, min, max);
+    return st;
+  }
+
+  function describeField(fieldDef, fstate) {
+    if (fstate.mode === "every") return null;
+    if (fstate.mode === "specific") {
+      var vals = (fstate.specific || []).slice().sort(function (a, b) { return a - b; });
+      if (!vals.length) return null;
+      var labels = vals.map(function (v) { return fieldDef.names ? fieldDef.names[v - fieldDef.min] : String(v); });
+      return joinList(labels);
+    }
+    if (fstate.mode === "range") {
+      var fLabel = fieldDef.names ? fieldDef.names[clampInt(fstate.range.from, fieldDef.min, fieldDef.max) - fieldDef.min] : fstate.range.from;
+      var tLabel = fieldDef.names ? fieldDef.names[clampInt(fstate.range.to, fieldDef.min, fieldDef.max) - fieldDef.min] : fstate.range.to;
+      return "de " + fLabel + " a " + tLabel;
+    }
+    if (fstate.mode === "increment") {
+      return "a cada " + fstate.increment.step + " a partir de " + fstate.increment.start;
+    }
+    return null;
+  }
+
+  function singleSpecific(f) { return f.mode === "specific" && (f.specific || []).length === 1; }
+
+  function describeCron(state, dayType) {
+    var second = state.second, minute = state.minute, hour = state.hour;
+    var dom = state.dom, month = state.month, dow = state.dow, year = state.year;
+    var dowNames = fieldByKey("dow").names;
+    var activeDayEvery = dayType === "dom" ? dom.mode === "every" : dow.mode === "every";
+
+    var allEvery = second.mode === "every" && minute.mode === "every" && hour.mode === "every" &&
+      activeDayEvery && month.mode === "every" && year.mode === "every";
+    if (allEvery) return "Executa a cada segundo.";
+
+    var secondTrivial = second.mode === "every" || (singleSpecific(second) && second.specific[0] === 0);
+
+    if (secondTrivial && minute.mode === "increment" && hour.mode === "every" && activeDayEvery && month.mode === "every" && year.mode === "every") {
+      return "Executa a cada " + minute.increment.step + " minuto(s).";
+    }
+
+    if (secondTrivial && singleSpecific(minute) && singleSpecific(hour) && activeDayEvery && month.mode === "every" && year.mode === "every") {
+      var hh = pad2(hour.specific[0]);
+      var mm = pad2(minute.specific[0]);
+      return "Executa todos os dias as " + hh + ":" + mm + ".";
+    }
+
+    if (secondTrivial && singleSpecific(minute) && singleSpecific(hour) && month.mode === "every" && year.mode === "every") {
+      var hh2 = pad2(hour.specific[0]);
+      var mm2 = pad2(minute.specific[0]);
+      if (dayType === "dow" && dow.mode === "specific" && (dow.specific || []).length) {
+        var labels = dow.specific.slice().sort(function (a, b) { return a - b; }).map(function (v) { return dowNames[v - 1]; });
+        return "Executa as " + hh2 + ":" + mm2 + ", em " + joinList(labels) + ".";
+      }
+      if (dayType === "dow" && dow.mode === "range") {
+        return "Executa as " + hh2 + ":" + mm2 + ", de " + dowNames[clampInt(dow.range.from, 1, 7) - 1] + " a " + dowNames[clampInt(dow.range.to, 1, 7) - 1] + ".";
+      }
+      if (dayType === "dom" && dom.mode === "specific" && (dom.specific || []).length === 1) {
+        return "Executa todo dia " + dom.specific[0] + " do mes as " + hh2 + ":" + mm2 + ".";
+      }
+    }
+
+    var clauses = [];
+    if (second.mode !== "every") { var ds = describeField(fieldByKey("second"), second); if (ds) clauses.push("segundo: " + ds); }
+    if (minute.mode !== "every") { var dmi = describeField(fieldByKey("minute"), minute); if (dmi) clauses.push("minuto: " + dmi); }
+    if (hour.mode !== "every") { var dh = describeField(fieldByKey("hour"), hour); if (dh) clauses.push("hora: " + dh); }
+    if (dayType === "dom") {
+      if (dom.mode !== "every") { var ddom = describeField(fieldByKey("dom"), dom); if (ddom) clauses.push("dia do mes: " + ddom); }
+    } else {
+      if (dow.mode !== "every") { var ddow = describeField(fieldByKey("dow"), dow); if (ddow) clauses.push("dia da semana: " + ddow); }
+    }
+    if (month.mode !== "every") { var dmo = describeField(fieldByKey("month"), month); if (dmo) clauses.push("mes: " + dmo); }
+    if (year.mode !== "every") { var dy = describeField(fieldByKey("year"), year); if (dy) clauses.push("ano: " + dy); }
+
+    if (!clauses.length) return "Executa a cada segundo.";
+    return "Executa quando " + clauses.join("; ") + ".";
+  }
+
+  function computeNextRuns(parts, count) {
+    var yearField = fieldByKey("year");
+    var secSet = parseFieldToSet(parts.second, 0, 59);
+    var minSet = parseFieldToSet(parts.minute, 0, 59);
+    var hourSet = parseFieldToSet(parts.hour, 0, 23);
+    var domSet = parts.dom === "?" ? null : parseFieldToSet(parts.dom, 1, 31);
+    var monthSet = parseFieldToSet(parts.month, 1, 12);
+    var dowSet = parts.dow === "?" ? null : parseFieldToSet(parts.dow, 1, 7);
+    var yearSet = parseFieldToSet(parts.year, yearField.min, yearField.max);
+    if (!secSet.length || !minSet.length || !hourSet.length || !monthSet.length || !yearSet.length) return [];
+    if (domSet !== null && !domSet.length && dowSet !== null && !dowSet.length) return [];
+
+    var minH = {}; minSet.forEach(function (v) { minH[v] = true; });
+    var hourH = {}; hourSet.forEach(function (v) { hourH[v] = true; });
+    var domH = null; if (domSet !== null) { domH = {}; domSet.forEach(function (v) { domH[v] = true; }); }
+    var monthH = {}; monthSet.forEach(function (v) { monthH[v] = true; });
+    var dowH = null; if (dowSet !== null) { dowH = {}; dowSet.forEach(function (v) { dowH[v] = true; }); }
+    var yearH = {}; yearSet.forEach(function (v) { yearH[v] = true; });
+
+    var results = [];
+    var d = new Date();
+    d.setMilliseconds(0);
+    var startSecondOffset = d.getSeconds() + 1;
+    d.setSeconds(0, 0);
+    var firstMinute = true;
+    var maxIterations = 60 * 24 * 366 * 3;
+    var iter = 0;
+    while (results.length < count && iter < maxIterations) {
+      iter++;
+      var yr = d.getFullYear();
+      if (!yearH[yr]) { d.setFullYear(d.getFullYear() + 1, 0, 1); d.setHours(0, 0, 0, 0); firstMinute = false; continue; }
+      var mo = d.getMonth() + 1;
+      if (!monthH[mo]) { d.setMonth(d.getMonth() + 1, 1); d.setHours(0, 0, 0, 0); firstMinute = false; continue; }
+      var domOk = domH === null ? true : !!domH[d.getDate()];
+      var quartzDow = d.getDay() + 1;
+      var dowOk = dowH === null ? true : !!dowH[quartzDow];
+      if (!(domOk && dowOk)) { d.setDate(d.getDate() + 1); d.setHours(0, 0, 0, 0); firstMinute = false; continue; }
+      if (!hourH[d.getHours()]) { d.setHours(d.getHours() + 1, 0, 0, 0); firstMinute = false; continue; }
+      if (!minH[d.getMinutes()]) { d.setMinutes(d.getMinutes() + 1, 0, 0); firstMinute = false; continue; }
+
+      var secStart = firstMinute ? startSecondOffset : 0;
+      for (var i = 0; i < secSet.length && results.length < count; i++) {
+        if (secSet[i] >= secStart) {
+          var candidate = new Date(d.getTime());
+          candidate.setSeconds(secSet[i], 0);
+          results.push(candidate);
+        }
+      }
+      firstMinute = false;
+      d.setMinutes(d.getMinutes() + 1, 0, 0);
+    }
+    return results;
+  }
+
+  function currentCronParts() {
+    var parts = {};
+    CRON_FIELDS.forEach(function (f) { parts[f.key] = fieldExprFor(f); });
+    return parts;
+  }
+
+  function updateCronOutput() {
+    var parts = currentCronParts();
+    var exprStr = [parts.second, parts.minute, parts.hour, parts.dom, parts.month, parts.dow, parts.year].join(" ");
+    var out = qs("#cronOutput");
+    if (out) out.textContent = exprStr;
+    var desc = qs("#cronDescription");
+    if (desc) desc.textContent = describeCron(cronState, cronDayType);
+    renderCronNextRuns(parts);
+  }
+
+  function renderCronNextRuns(parts) {
+    var list = qs("#cronNextRuns");
+    if (!list) return;
+    list.innerHTML = "";
+    var runs = computeNextRuns(parts, 5);
+    if (!runs.length) {
+      list.appendChild(el("li", {}, "Nenhuma correspondencia encontrada no horizonte calculado."));
+      return;
+    }
+    runs.forEach(function (d) {
+      list.appendChild(el("li", {}, d.toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })));
+    });
+  }
+
+  function renderCronFieldValue(f, wrap) {
+    wrap.innerHTML = "";
+    var st = cronState[f.key];
+    if (st.mode === "every") {
+      wrap.appendChild(el("p", { "class": "cron-field-hint" }, "Corresponde a qualquer valor (*)."));
+    } else if (st.mode === "specific") {
+      var grid = el("div", { "class": "cron-chip-grid" });
+      for (var v = f.min; v <= f.max; v++) {
+        (function (val) {
+          var label = f.names ? f.names[val - f.min] : String(val);
+          var isActive = (st.specific || []).indexOf(val) !== -1;
+          var chip = el("button", { type: "button", "class": "cron-chip" + (isActive ? " active" : "") }, label);
+          chip.addEventListener("click", function () {
+            var idx = st.specific.indexOf(val);
+            if (idx === -1) st.specific.push(val); else st.specific.splice(idx, 1);
+            chip.classList.toggle("active");
+            updateCronOutput();
+          });
+          grid.appendChild(chip);
+        })(v);
+      }
+      wrap.appendChild(grid);
+    } else if (st.mode === "range") {
+      var row = el("div", { "class": "cron-inline-inputs" });
+      row.appendChild(el("span", {}, "de"));
+      var fromInput = el("input", { type: "number", min: String(f.min), max: String(f.max), value: String(st.range.from) });
+      fromInput.addEventListener("input", function () { st.range.from = clampInt(parseInt(fromInput.value, 10), f.min, f.max); updateCronOutput(); });
+      row.appendChild(fromInput);
+      row.appendChild(el("span", {}, "ate"));
+      var toInput = el("input", { type: "number", min: String(f.min), max: String(f.max), value: String(st.range.to) });
+      toInput.addEventListener("input", function () { st.range.to = clampInt(parseInt(toInput.value, 10), f.min, f.max); updateCronOutput(); });
+      row.appendChild(toInput);
+      wrap.appendChild(row);
+    } else if (st.mode === "increment") {
+      var row2 = el("div", { "class": "cron-inline-inputs" });
+      row2.appendChild(el("span", {}, "a partir de"));
+      var startInput = el("input", { type: "number", min: String(f.min), max: String(f.max), value: String(st.increment.start) });
+      startInput.addEventListener("input", function () { st.increment.start = clampInt(parseInt(startInput.value, 10), f.min, f.max); updateCronOutput(); });
+      row2.appendChild(startInput);
+      row2.appendChild(el("span", {}, "a cada"));
+      var stepInput = el("input", { type: "number", min: "1", value: String(st.increment.step) });
+      stepInput.addEventListener("input", function () { st.increment.step = Math.max(1, parseInt(stepInput.value, 10) || 1); updateCronOutput(); });
+      row2.appendChild(stepInput);
+      wrap.appendChild(row2);
+    }
+  }
+
+  function buildCronFieldCard(f) {
+    var isInactiveDayField = (f.key === "dom" && cronDayType !== "dom") || (f.key === "dow" && cronDayType !== "dow");
+    var card = el("div", { "class": "cron-field-card" + (isInactiveDayField ? " is-inactive" : "") });
+    card.appendChild(el("h4", {}, f.label));
+    if (isInactiveDayField) {
+      var otherLabel = f.key === "dom" ? "Dia da semana" : "Dia do mes";
+      card.appendChild(el("p", { "class": "cron-field-hint" }, "Definido como ? (nao especificado) - controlado pelo campo " + otherLabel + " acima."));
+      return card;
+    }
+    var modeSelect = el("select", { "aria-label": "Modo para " + f.label });
+    [
+      ["every", f.everyLabel],
+      ["specific", "Valor(es) especifico(s)"],
+      ["range", "Intervalo"],
+      ["increment", "Incremento (a cada N)"]
+    ].forEach(function (opt) {
+      var attrs = { value: opt[0] };
+      if (cronState[f.key].mode === opt[0]) attrs.selected = "selected";
+      var o = el("option", attrs, opt[1]);
+      modeSelect.appendChild(o);
+    });
+    var valueWrap = el("div", { "class": "cron-field-value" });
+    modeSelect.addEventListener("change", function () {
+      cronState[f.key].mode = modeSelect.value;
+      renderCronFieldValue(f, valueWrap);
+      updateCronOutput();
+    });
+    card.appendChild(modeSelect);
+    card.appendChild(valueWrap);
+    renderCronFieldValue(f, valueWrap);
+    return card;
+  }
+
+  function renderAllCronFields() {
+    var wrap = qs("#cronFields");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    CRON_FIELDS.forEach(function (f) { wrap.appendChild(buildCronFieldCard(f)); });
+  }
+
+  function renderCronDayTypeToggle() {
+    var wrap = qs("#cronDayTypeToggle");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    [["dom", "Dia do mes"], ["dow", "Dia da semana"]].forEach(function (opt) {
+      var btn = el("button", { type: "button", "class": "cron-daytype-btn" + (cronDayType === opt[0] ? " active" : "") }, opt[1]);
+      btn.addEventListener("click", function () {
+        if (cronDayType === opt[0]) return;
+        cronDayType = opt[0];
+        renderCronDayTypeToggle();
+        renderAllCronFields();
+        updateCronOutput();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderCronPresets() {
+    var wrap = qs("#cronPresets");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    CRON_PRESETS.forEach(function (p) {
+      var btn = el("button", { "class": "cron-preset-btn", type: "button" }, p.label);
+      btn.addEventListener("click", function () {
+        p.apply();
+        renderCronDayTypeToggle();
+        renderAllCronFields();
+        updateCronOutput();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function wireCronCopy() {
+    var btn = qs("#cronCopyBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var text = qs("#cronOutput").textContent;
+      var done = function () { btn.textContent = "Copiado!"; setTimeout(function () { btn.textContent = "Copiar"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function wireCronParse() {
+    var btn = qs("#cronParseBtn");
+    var input = qs("#cronParseInput");
+    var errorEl = qs("#cronParseError");
+    if (!btn || !input || !errorEl) return;
+    btn.addEventListener("click", function () {
+      var raw = input.value.trim();
+      if (!raw) return;
+      var tokens = raw.split(/\s+/);
+      if (tokens.length !== 6 && tokens.length !== 7) {
+        errorEl.textContent = "A expressao Quartz deve ter 6 ou 7 campos: segundo minuto hora dia-do-mes mes dia-da-semana [ano].";
+        errorEl.hidden = false;
+        return;
+      }
+      errorEl.hidden = true;
+      var secondTok = tokens[0], minuteTok = tokens[1], hourTok = tokens[2];
+      var domTok = tokens[3], monthTok = tokens[4], dowTok = tokens[5];
+      var yearTok = tokens.length === 7 ? tokens[6] : "*";
+
+      cronState.second = classifyFieldExpr(secondTok, 0, 59);
+      cronState.minute = classifyFieldExpr(minuteTok, 0, 59);
+      cronState.hour = classifyFieldExpr(hourTok, 0, 23);
+      cronState.month = classifyFieldExpr(monthTok, 1, 12);
+      cronState.year = classifyFieldExpr(yearTok, fieldByKey("year").min, fieldByKey("year").max);
+
+      if (domTok === "?") {
+        cronDayType = "dow";
+        cronState.dow = classifyFieldExpr(dowTok, 1, 7);
+        cronState.dom = defaultCronFieldState(fieldByKey("dom"));
+      } else if (dowTok === "?") {
+        cronDayType = "dom";
+        cronState.dom = classifyFieldExpr(domTok, 1, 31);
+        cronState.dow = defaultCronFieldState(fieldByKey("dow"));
+      } else {
+        cronDayType = "dom";
+        cronState.dom = classifyFieldExpr(domTok, 1, 31);
+        cronState.dow = defaultCronFieldState(fieldByKey("dow"));
+        errorEl.textContent = "Nota: Quartz exige '?' em dia-do-mes ou dia-da-semana. Ajustado para usar dia-do-mes e definir dia-da-semana como '?'.";
+        errorEl.hidden = false;
+      }
+
+      renderCronDayTypeToggle();
+      renderAllCronFields();
+      updateCronOutput();
+    });
+  }
+
+  function wireCronBuilder() {
+    initCronState();
+    renderCronDayTypeToggle();
+    renderCronPresets();
+    renderAllCronFields();
+    updateCronOutput();
+    wireCronCopy();
+    wireCronParse();
+  }
+
+  var b64Mode = "decode";
+
+  function b64BytesToBinaryString(bytes) {
+    var out = "";
+    var chunk = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunk) {
+      out += String.fromCharCode.apply(null, bytes.subarray ? bytes.subarray(i, i + chunk) : bytes.slice(i, i + chunk));
+    }
+    return out;
+  }
+  function b64UrlToStandard(str) { return str.replace(/-/g, "+").replace(/_/g, "/"); }
+  function b64StandardToUrl(str) { return str.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+
+  function b64Decode(str, charset, urlSafe) {
+    var cleaned = str.replace(/\s+/g, "");
+    if (urlSafe) cleaned = b64UrlToStandard(cleaned);
+    while (cleaned.length % 4 !== 0) cleaned += "=";
+    var binary = atob(cleaned);
+    if (charset === "latin1") return binary;
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  }
+
+  function b64Encode(str, charset, urlSafe) {
+    var bytes;
+    if (charset === "latin1") {
+      bytes = new Uint8Array(str.length);
+      for (var i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i) & 0xFF;
+    } else {
+      bytes = new TextEncoder().encode(str);
+    }
+    var binary = b64BytesToBinaryString(bytes);
+    var out = btoa(binary);
+    if (urlSafe) out = b64StandardToUrl(out);
+    return out;
+  }
+
+  function b64Process() {
+    var input = qs("#b64Input");
+    var output = qs("#b64Output");
+    var errorEl = qs("#b64Error");
+    var statsEl = qs("#b64Stats");
+    var charsetEl = qs("#b64Charset");
+    var urlSafeEl = qs("#b64UrlSafe");
+    if (!input || !output || !errorEl || !statsEl || !charsetEl || !urlSafeEl) return;
+    var charset = charsetEl.value;
+    var urlSafe = urlSafeEl.checked;
+    var raw = input.value;
+    errorEl.hidden = true;
+    if (!raw) { output.value = ""; statsEl.textContent = ""; return; }
+    try {
+      if (b64Mode === "decode") {
+        var text = b64Decode(raw, charset, urlSafe);
+        output.value = text;
+        statsEl.textContent = raw.replace(/\s+/g, "").length + " caracteres em Base64 -> " + text.length + " caracteres decodificados.";
+      } else {
+        var encoded = b64Encode(raw, charset, urlSafe);
+        output.value = encoded;
+        statsEl.textContent = raw.length + " caracteres -> " + encoded.length + " caracteres em Base64.";
+      }
+    } catch (e) {
+      output.value = "";
+      statsEl.textContent = "";
+      errorEl.textContent = b64Mode === "decode"
+        ? "Base64 invalido: verifique se o texto colado esta completo e sem caracteres extras."
+        : "Nao foi possivel codificar o texto informado.";
+      errorEl.hidden = false;
+    }
+  }
+
+  function b64UpdateLabels() {
+    var inputLabel = qs("#b64InputLabel");
+    var outputLabel = qs("#b64OutputLabel");
+    var input = qs("#b64Input");
+    if (inputLabel) inputLabel.textContent = b64Mode === "decode" ? "Texto em Base64" : "Texto original";
+    if (outputLabel) outputLabel.textContent = b64Mode === "decode" ? "Resultado decodificado" : "Resultado em Base64";
+    if (input) input.placeholder = b64Mode === "decode" ? "Cole aqui o texto em Base64" : "Digite ou cole o texto original";
+  }
+
+  function renderB64ModeToggle() {
+    var wrap = qs("#b64ModeToggle");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    [["decode", "Decodificar"], ["encode", "Codificar"]].forEach(function (opt) {
+      var btn = el("button", { type: "button", "class": "b64-mode-btn" + (b64Mode === opt[0] ? " active" : "") }, opt[1]);
+      btn.addEventListener("click", function () {
+        if (b64Mode === opt[0]) return;
+        b64Mode = opt[0];
+        renderB64ModeToggle();
+        b64UpdateLabels();
+        b64Process();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function wireB64Input() {
+    var input = qs("#b64Input");
+    var charsetEl = qs("#b64Charset");
+    var urlSafeEl = qs("#b64UrlSafe");
+    if (!input) return;
+    var t;
+    input.addEventListener("input", function () {
+      clearTimeout(t);
+      t = setTimeout(b64Process, 120);
+    });
+    if (charsetEl) charsetEl.addEventListener("change", b64Process);
+    if (urlSafeEl) urlSafeEl.addEventListener("change", b64Process);
+  }
+
+  function wireB64Copy() {
+    var btn = qs("#b64CopyBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var text = qs("#b64Output").value;
+      if (!text) return;
+      var done = function () { btn.textContent = "Copiado!"; setTimeout(function () { btn.textContent = "Copiar"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function wireB64Swap() {
+    var btn = qs("#b64SwapBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var input = qs("#b64Input");
+      var output = qs("#b64Output");
+      if (!input || !output) return;
+      var newInputVal = output.value;
+      b64Mode = b64Mode === "decode" ? "encode" : "decode";
+      renderB64ModeToggle();
+      b64UpdateLabels();
+      input.value = newInputVal;
+      b64Process();
+    });
+  }
+
+  function wireBase64Decoder() {
+    b64Mode = "decode";
+    renderB64ModeToggle();
+    b64UpdateLabels();
+    wireB64Input();
+    wireB64Copy();
+    wireB64Swap();
+  }
+
+  var SM_OPTIONS = [
+    { key: "extrair_arquivo", label: "Extrair Resultado em arquivo", hint: "Gera um script que extrai o resultado da consulta para um arquivo TXT ou CSV." },
+    { key: "usar_api", label: "Utilizar API", hint: "Gera um script que envia os dados da consulta para uma API via POST." }
+  ];
+  var smSelectedOption = SM_OPTIONS[0].key;
+  var smFileType = "txt";
+
+  function renderSmOptions() {
+    var wrap = qs("#smOptions");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    SM_OPTIONS.forEach(function (opt) {
+      var btn = el("button", { type: "button", "class": "sm-option-btn" + (smSelectedOption === opt.key ? " active" : "") });
+      btn.appendChild(el("span", { "class": "sm-option-title" }, opt.label));
+      btn.appendChild(el("span", { "class": "sm-option-hint" }, opt.hint || "Comportamento a definir."));
+      btn.addEventListener("click", function () {
+        smSelectedOption = opt.key;
+        renderSmOptions();
+      });
+      wrap.appendChild(btn);
+    });
+    updateSmOptionFieldsState();
+  }
+
+  function updateSmOptionFieldsState() {
+    var row = qs("#smFileTypeRow");
+    if (row) {
+      var extractEnabled = smSelectedOption === "extrair_arquivo";
+      row.classList.toggle("is-disabled", !extractEnabled);
+      qsa("#smFileTypeRow .b64-mode-btn").forEach(function (btn) {
+        btn.disabled = !extractEnabled;
+      });
+    }
+    var apiCard = qs("#smApiCard");
+    if (apiCard) {
+      var apiEnabled = smSelectedOption === "usar_api";
+      apiCard.classList.toggle("is-disabled", !apiEnabled);
+      var urlInput = qs("#smApiUrl");
+      var methodInput = qs("#smApiMethod");
+      var paramsInput = qs("#smApiParams");
+      var listVarInput = qs("#smApiListVar");
+      if (urlInput) urlInput.disabled = !apiEnabled;
+      if (methodInput) methodInput.disabled = !apiEnabled;
+      if (paramsInput) paramsInput.disabled = !apiEnabled;
+      if (listVarInput) listVarInput.disabled = !apiEnabled;
+      qsa("#smApiModeToggle .b64-mode-btn").forEach(function (btn) {
+        btn.disabled = !apiEnabled;
+      });
+    }
+  }
+
+  var smApiMode = "single";
+
+  function updateSmApiModeUI() {
+    var listField = qs("#smApiListVarField");
+    if (listField) listField.hidden = smApiMode !== "lote";
+  }
+
+  function wireSmApiMode() {
+    var btns = qsa("#smApiModeToggle .b64-mode-btn");
+    btns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        smApiMode = btn.getAttribute("data-apimode") || "single";
+        btns.forEach(function (b) { b.classList.toggle("active", b === btn); });
+        updateSmApiModeUI();
+      });
+    });
+  }
+
+  function wireSmFileType() {
+    var btns = qsa("#smFileTypeRow .b64-mode-btn");
+    btns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        smFileType = btn.getAttribute("data-filetype") || "txt";
+        btns.forEach(function (b) { b.classList.toggle("active", b === btn); });
+      });
+    });
+  }
+
+  function smBuildExtractScript(query, vars, fileType) {
+    var m = query.match(/percorrer\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
+    if (!m) return null;
+    var setup = query.slice(0, m.index).replace(/\s+$/, "");
+    var collectionVar = m[1];
+    var iterVar = m[2];
+    var ext = fileType === "csv" ? "csv" : "txt";
+    var fileName = "Resultado." + ext;
+    var lines = setup.length ? setup.split("\n") : [];
+    lines.push("arquivo = Arquivo.novo('" + fileName + "', '" + ext + "', [encoding: 'UTF-8'])");
+    lines.push("percorrer (" + collectionVar + ") { " + iterVar + " ->");
+    var fields = vars.map(function (v) { return (v || "").trim(); }).filter(function (v) { return v.length > 0; });
+    if (!fields.length) return { error: "novars" };
+    if (fields.length === 1) {
+      lines.push("    arquivo.escrever(" + iterVar + "." + fields[0] + ".toString())");
+    } else {
+      var parts = fields.map(function (field, idx) {
+        return idx === 0
+          ? "${" + iterVar + "." + field + "}"
+          : "${" + iterVar + "." + field + " ?: ''}";
+      });
+      lines.push("    arquivo.escrever(\"" + parts.join(";") + "\")");
+    }
+    lines.push("    arquivo.novaLinha()");
+    lines.push("}");
+    lines.push("Resultado.arquivo(arquivo, '" + fileName + "')");
+    return { script: lines.join("\n") };
+  }
+
+  function smBuildApiScript(query, apiUrl, paramsText, varNames, httpMethod) {
+    if (!apiUrl) return { error: "nourl" };
+    var template;
+    try {
+      var parsed = JSON.parse(paramsText);
+      template = Array.isArray(parsed) ? parsed[0] : parsed;
+    } catch (e) {
+      return { error: "invalidjson" };
+    }
+    if (!template || typeof template !== "object") return { error: "invalidjson" };
+
+    var m = query.match(/percorrer\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
+    if (!m) return { error: "nopercorrer" };
+    var setup = query.slice(0, m.index).replace(/\s+$/, "");
+    var collectionVar = m[1];
+    var iterVar = m[2];
+
+    var buscaLineRegex = /^(\s*)([A-Za-z_$][\w$]*)\s*=\s*(.+?)\.busca\(([^)]*)\)\s*$/m;
+    var buscaMatch = setup.match(buscaLineRegex);
+    if (!buscaMatch) return { error: "nobusca" };
+    var buscaArgs = buscaMatch[4];
+    var criterioMatch = buscaArgs.match(/criterio\s*:\s*([A-Za-z_$][\w$]*)/);
+    var camposMatch = buscaArgs.match(/campos\s*:\s*"([^"]*)"/);
+    var filtroVarName = criterioMatch ? criterioMatch[1] : null;
+    var existingCampos = camposMatch
+      ? camposMatch[1].split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+      : [];
+
+    var filtroMap = {};
+    if (filtroVarName) {
+      var filtroAssignRegex = new RegExp("^\\s*" + filtroVarName + "\\s*=\\s*\"([^\"]*)\"", "m");
+      var filtroAssignMatch = setup.match(filtroAssignRegex);
+      if (filtroAssignMatch) {
+        filtroAssignMatch[1].split(/\s+(?:and|AND|&&)\s+/).forEach(function (clause) {
+          var clauseMatch = clause.match(/^\s*([A-Za-z_$][\w$]*)\s*=\s*(.+?)\s*$/);
+          if (!clauseMatch) return;
+          var ck = clauseMatch[1];
+          var cv = clauseMatch[2].trim();
+          var isNumeric = /^-?\d+(\.\d+)?$/.test(cv);
+          if (!isNumeric && /^['"].*['"]$/.test(cv)) {
+            cv = cv.slice(1, -1);
+          }
+          filtroMap[ck.toLowerCase()] = { rawValue: cv, isNumeric: isNumeric };
+        });
+      }
+    }
+
+    var varList = (varNames || []).map(function (v) { return (v || "").trim(); }).filter(Boolean);
+    var usedVars = [];
+    var placeholders = [];
+
+    function resolveLeaf(key) {
+      if (key) {
+        var normKey = key.toLowerCase();
+        if (normKey === "idintegracao") {
+          return "'1'";
+        }
+        var matchedVar = varList.filter(function (v) { return v.toLowerCase() === normKey; })[0];
+        if (matchedVar) {
+          if (usedVars.indexOf(matchedVar) === -1) usedVars.push(matchedVar);
+          return iterVar + "." + matchedVar;
+        }
+        if (filtroMap[normKey]) {
+          var f = filtroMap[normKey];
+          return f.isNumeric ? f.rawValue : ("'" + f.rawValue.replace(/'/g, "\\'") + "'");
+        }
+      }
+      if (placeholders.indexOf(key) === -1) placeholders.push(key);
+      return "null /* TODO: definir origem de \"" + key + "\" */";
+    }
+
+    function groovyLiteral(value, indent, keyForLeaf) {
+      var innerIndent = indent + "    ";
+      if (Array.isArray(value)) {
+        if (!value.length) return "[]";
+        var items = value.map(function (v) { return innerIndent + groovyLiteral(v, innerIndent, keyForLeaf); });
+        return "[\n" + items.join(",\n") + "\n" + indent + "]";
+      }
+      if (value && typeof value === "object") {
+        var keys = Object.keys(value);
+        if (!keys.length) return "[:]";
+        var entries = keys.map(function (k) {
+          return innerIndent + k + ": " + groovyLiteral(value[k], innerIndent, k);
+        });
+        return "[\n" + entries.join(",\n") + "\n" + indent + "]";
+      }
+      return resolveLeaf(keyForLeaf);
+    }
+
+    var payloadLiteral = groovyLiteral(template, "    ", null);
+
+    var mergedCampos = existingCampos.slice();
+    usedVars.forEach(function (v) {
+      var already = mergedCampos.some(function (c) { return c.toLowerCase() === v.toLowerCase(); });
+      if (!already) mergedCampos.push(v);
+    });
+
+    var newBuscaLine = buscaMatch[1] + buscaMatch[2] + " = " + buscaMatch[3] +
+      ".busca(criterio: " + (filtroVarName || "") + ", campos: \"" + mergedCampos.join(", ") + "\")";
+    var newSetup = setup.slice(0, buscaMatch.index) + newBuscaLine + setup.slice(buscaMatch.index + buscaMatch[0].length);
+
+    var lines = newSetup.length ? newSetup.split("\n") : [];
+    lines.push("payload = []");
+    if (placeholders.length) {
+      lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
+      placeholders.forEach(function (p) {
+        lines.push("//   - " + p);
+      });
+    }
+    lines.push("percorrer (" + collectionVar + ") { " + iterVar + " ->");
+    lines.push("    payload << " + payloadLiteral);
+    lines.push("}");
+    lines.push("resposta = Http.servico(\"" + apiUrl + "\")");
+    lines.push("    .chaveIntegracao(Variavel.CHAVE_INTEGRACAO)");
+    var allowedMethods = ["PUT", "POST", "PATCH", "DELETE"];
+    var method = (httpMethod || "").toUpperCase();
+    if (allowedMethods.indexOf(method) === -1) method = "POST";
+    lines.push("    ." + method + "(payload, Http.JSON)");
+    lines.push("se (!resposta.sucesso()) {");
+    lines.push("    suspender \"Erro ao enviar dados: ${resposta.codigo()} - ${resposta.conteudo()}\"");
+    lines.push("}");
+    lines.push("retornar resposta.conteudo()");
+
+    return { script: lines.join("\n"), placeholders: placeholders };
+  }
+
+  function smBuildApiLoteScript(query, apiUrl, httpMethod, paramsText, listVarName) {
+    if (!listVarName) return { error: "nolistvar" };
+    if (!apiUrl) return { error: "nourl" };
+    var template;
+    try {
+      var parsed = JSON.parse(paramsText);
+      template = Array.isArray(parsed) ? parsed[0] : parsed;
+    } catch (e) {
+      return { error: "invalidjson" };
+    }
+    if (!template || typeof template !== "object") return { error: "invalidjson" };
+
+    var allowedMethods = ["PUT", "POST", "PATCH", "DELETE"];
+    var method = (httpMethod || "").toUpperCase();
+    if (allowedMethods.indexOf(method) === -1) method = "POST";
+
+    function formatLiteral(value) {
+      if (value === null) return "null";
+      if (typeof value === "boolean") return value ? "true" : "false";
+      if (typeof value === "number") return String(value);
+      return "'" + String(value).replace(/'/g, "\\'") + "'";
+    }
+
+    function groovyLiteralLote(value, indent, keyForLeaf) {
+      var innerIndent = indent + "    ";
+      if (Array.isArray(value)) {
+        if (!value.length) return "[]";
+        var items = value.map(function (v) { return innerIndent + groovyLiteralLote(v, innerIndent, keyForLeaf); });
+        return "[\n" + items.join(",\n") + "\n" + indent + "]";
+      }
+      if (value && typeof value === "object") {
+        var keys = Object.keys(value);
+        if (!keys.length) return "[:]";
+        var entries = keys.map(function (k) {
+          return innerIndent + k + ": " + groovyLiteralLote(value[k], innerIndent, k);
+        });
+        return "[\n" + entries.join(",\n") + "\n" + indent + "]";
+      }
+      if (keyForLeaf) {
+        var normKey = keyForLeaf.toLowerCase();
+        if (normKey === "id") return "id";
+        if (normKey === "idintegracao") return "\"INTEGRACAO_${id}\"";
+      }
+      return formatLiteral(value);
+    }
+
+    var payloadLiteral = groovyLiteralLote(template, "        ", null);
+
+    var warnings = [];
+    if (query.indexOf(listVarName) === -1) {
+      warnings.push("A variavel \"" + listVarName + "\" nao foi encontrada na consulta informada - confirme se o nome esta correto.");
+    }
+
+    var lines = [];
+    lines.push(query.replace(/\s+$/, ""));
+    lines.push("");
+    lines.push("// ==========================================================");
+    lines.push("// Integracao - envio para API externa (" + method + ")");
+    lines.push("// ==========================================================");
+    lines.push("URL_API = \"" + apiUrl + "\"");
+    lines.push("CHAVE_INTEGRACAO_API = Variavel?.CHAVE_INTEGRACAO");
+    lines.push("");
+    lines.push("esquemaLog = [");
+    lines.push("    id            : Esquema.inteiro,");
+    lines.push("    idIntegracao  : Esquema.caracter,");
+    lines.push("    codigoRetorno : Esquema.caracter,");
+    lines.push("    sucesso       : Esquema.caracter,");
+    lines.push("    mensagem      : Esquema.caracter");
+    lines.push("]");
+    lines.push("fonteLog = Dados.dinamico.v2.novo(esquemaLog)");
+    lines.push("");
+    lines.push("se (" + listVarName + ".isEmpty()) {");
+    lines.push("    retornar fonteLog");
+    lines.push("}");
+    lines.push("");
+    lines.push("TAMANHO_LOTE = 50");
+    lines.push(listVarName + ".collate(TAMANHO_LOTE).each { lote ->");
+    lines.push("    payload = lote.collect { id ->");
+    lines.push("        " + payloadLiteral);
+    lines.push("    }");
+    lines.push("    tentar {");
+    lines.push("        resposta = Http.servico(URL_API)");
+    lines.push("            .chaveIntegracao(CHAVE_INTEGRACAO_API)");
+    lines.push("            ." + method + "(payload, Http.JSON)");
+    lines.push("    } tratar {");
+    lines.push("        esperar 2.segundo");
+    lines.push("        resposta = Http.servico(URL_API)");
+    lines.push("            .chaveIntegracao(CHAVE_INTEGRACAO_API)");
+    lines.push("            ." + method + "(payload, Http.JSON)");
+    lines.push("    }");
+    lines.push("    codigoHttp  = resposta.codigo()");
+    lines.push("    loteOk      = (codigoHttp == 200 || codigoHttp == 201 || codigoHttp == 204)");
+    lines.push("    conteudoRes = resposta.conteudo()");
+    lines.push("    lote.each { id ->");
+    lines.push("        fonteLog.inserirLinha([");
+    lines.push("            id            : id,");
+    lines.push("            idIntegracao  : \"INTEGRACAO_${id}\",");
+    lines.push("            codigoRetorno : \"${codigoHttp}\",");
+    lines.push("            sucesso       : loteOk ? \"SIM\" : \"NAO\",");
+    lines.push("            mensagem      : loteOk ? \"Atualizado com sucesso\" : conteudoRes");
+    lines.push("        ])");
+    lines.push("    }");
+    lines.push("}");
+    lines.push("retornar fonteLog");
+
+    return { script: lines.join("\n"), warnings: warnings };
+  }
+
+  function wireSmGenerate() {
+    var btn = qs("#smGenerateBtn");
+    var input = qs("#smQueryInput");
+    var output = qs("#smOutput");
+    if (!btn || !input || !output) return;
+    btn.addEventListener("click", function () {
+      var query = input.value.trim();
+      if (!query) {
+        showToast("Cole a consulta antes de gerar.", "error");
+        return;
+      }
+      if (smSelectedOption === "extrair_arquivo") {
+        var vars = [1, 2, 3, 4, 5].map(function (i) {
+          var field = qs("#smVar" + i);
+          return field ? field.value : "";
+        });
+        var result = smBuildExtractScript(query, vars, smFileType);
+        if (!result) {
+          showToast("Nao foi possivel localizar o bloco \"percorrer\" na consulta.", "error");
+          return;
+        }
+        if (result.error === "novars") {
+          showToast("Informe ao menos uma variavel para gerar o script.", "error");
+          return;
+        }
+        output.textContent = result.script;
+        return;
+      }
+      if (smSelectedOption === "usar_api") {
+        var apiUrl = (qs("#smApiUrl") || {}).value || "";
+        var apiMethod = (qs("#smApiMethod") || {}).value || "POST";
+        var paramsText = (qs("#smApiParams") || {}).value || "";
+
+        if (smApiMode === "lote") {
+          var listVarName = ((qs("#smApiListVar") || {}).value || "").trim();
+          var loteResult = smBuildApiLoteScript(query, apiUrl.trim(), apiMethod, paramsText.trim(), listVarName);
+          if (loteResult.error === "nolistvar") {
+            showToast("Informe o nome da variavel de saida (lista de IDs).", "error");
+            return;
+          }
+          if (loteResult.error === "nourl") {
+            showToast("Informe a URL da API.", "error");
+            return;
+          }
+          if (loteResult.error === "invalidjson") {
+            showToast("JSON de parametros invalido. Verifique a sintaxe.", "error");
+            return;
+          }
+          output.textContent = loteResult.script;
+          if (loteResult.warnings && loteResult.warnings.length) {
+            showToast(loteResult.warnings[0], "error");
+          }
+          return;
+        }
+
+        var apiVars = [1, 2, 3, 4, 5].map(function (i) {
+          var field = qs("#smVar" + i);
+          return field ? field.value : "";
+        });
+        var apiResult = smBuildApiScript(query, apiUrl.trim(), paramsText.trim(), apiVars, apiMethod);
+        if (apiResult.error === "nourl") {
+          showToast("Informe a URL da API.", "error");
+          return;
+        }
+        if (apiResult.error === "invalidjson") {
+          showToast("JSON de parametros invalido. Verifique a sintaxe.", "error");
+          return;
+        }
+        if (apiResult.error === "nopercorrer") {
+          showToast("Nao foi possivel localizar o bloco \"percorrer\" na consulta.", "error");
+          return;
+        }
+        if (apiResult.error === "nobusca") {
+          showToast("Nao foi possivel localizar uma chamada \"busca(...)\" com criterio/campos na consulta.", "error");
+          return;
+        }
+        output.textContent = apiResult.script;
+        if (apiResult.placeholders && apiResult.placeholders.length) {
+          showToast("Script gerado com " + apiResult.placeholders.length + " campo(s) sem origem identificada - revise os TODOs.", "info");
+        }
+        return;
+      }
+      var opt = SM_OPTIONS.filter(function (o) { return o.key === smSelectedOption; })[0];
+      output.textContent = "// Geracao para \"" + (opt ? opt.label : "") + "\" ainda nao configurada.\n// Em breve este botao vai gerar o script completo a partir da consulta informada.";
+    });
+  }
+
+  function wireSmCopy() {
+    var btn = qs("#smCopyBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var text = qs("#smOutput").textContent;
+      if (!text) return;
+      var done = function () { btn.textContent = "Copiado!"; setTimeout(function () { btn.textContent = "Copiar"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function wireScriptMaker() {
+    smSelectedOption = SM_OPTIONS[0].key;
+    smFileType = "txt";
+    smApiMode = "single";
+    renderSmOptions();
+    updateSmApiModeUI();
+    wireSmFileType();
+    wireSmApiMode();
+    wireSmGenerate();
+    wireSmCopy();
+  }
+
+  function buildDocument(nextScripts) {
+    var styleText = qs("#app-style").textContent;
+    var appJsText = qs("#app-js").textContent;
+    var dataJson = escapeCloseScript(JSON.stringify({ scripts: nextScripts }));
+    var html = "<!doctype html>\n<html>\n<head>\n" +
+      '<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      "<title>Scriptorium Betha</title>\n" +
+      '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">\n' +
+      '<style id="app-style">' + styleText + "</style>\n" +
+      "</head>\n<body>\n" +
+      '<div id="root"></div>\n' +
+      '<script id="init-data" type="application/json">' + dataJson + "<" + "/script>\n" +
+      '<script id="app-js" type="text/plain">' + appJsText + "<" + "/script>\n" +
+      "<script>" + BOOTSTRAP_SRC + "<" + "/script>\n" +
+      "</body>\n</html>";
+    return html;
+  }
+
+  function publishScripts(nextScripts, opts) {
+    opts = opts || {};
+    if (!capability) {
+      if (opts.onError) opts.onError("Nao e possivel salvar alteracoes neste visualizador.");
+      else showToast("Nao e possivel salvar alteracoes neste visualizador.", "error");
+      return;
+    }
+    if (!writable) {
+      if (opts.onError) opts.onError("Este repositorio esta em modo somente leitura para voce.");
+      return;
+    }
+    attemptPublish(nextScripts, opts, false);
+  }
+
+  function attemptPublish(nextScripts, opts, isRetry) {
+    var html = buildDocument(nextScripts);
+    capability.publish(html).then(function () {
+      // success: this view reloads automatically to the new version.
+    }).catch(function (err) {
+      var code = err && err.code;
+      if (code === "conflict") {
+        if (opts.onError) opts.onError("Alguem salvou uma alteracao ao mesmo tempo - atualizando a pagina...");
+        return;
+      }
+      if (code === "not_writer" || code === "not_granted" || code === "consent_required") {
+        writable = false;
+        showReadonlyBanner();
+        if (opts.onError) opts.onError("Voce nao tem permissao para editar este repositorio.");
+        return;
+      }
+      if (code === "not_declared" || code === "capability_disabled" || code === "capability_removed") {
+        writable = false;
+        showReadonlyBanner();
+        if (opts.onError) opts.onError("Salvar nao esta disponivel neste momento.");
+        return;
+      }
+      if (code === "too_large") {
+        if (opts.onError) opts.onError("O script e grande demais para ser salvo.");
+        return;
+      }
+      if (code === "rate_limited") {
+        if (opts.onError) opts.onError("Muitas alteracoes em pouco tempo - aguarde um instante e tente novamente.");
+        return;
+      }
+      if (code === "upstream_error" && !isRetry) {
+        setTimeout(function () { attemptPublish(nextScripts, opts, true); }, 700 + Math.random() * 500);
+        return;
+      }
+      if (opts.onError) opts.onError("Nao foi possivel salvar. Tente novamente.");
+    });
+  }
+
+  var PAGES = ["scripts", "apimaker", "cron", "base64", "bfcscript", "apistributos", "apisprocuradoria", "apisenotafly", "apisenotacloud", "apilivroeletronico"];
+
+  function switchPage(page) {
+    if (PAGES.indexOf(page) === -1) return;
+    PAGES.forEach(function (p) {
+      var sec = qs("#page-" + p);
+      if (sec) sec.hidden = (p !== page);
+    });
+    qsa(".nav-item").forEach(function (btn) {
+      var isActive = btn.getAttribute("data-page") === page;
+      btn.classList.toggle("active", isActive);
+      if (isActive) btn.setAttribute("aria-current", "page");
+      else btn.removeAttribute("aria-current");
+    });
+  }
+
+  function wireSidebar() {
+    qsa(".nav-item").forEach(function (btn) {
+      btn.addEventListener("click", function () { switchPage(btn.getAttribute("data-page")); });
+    });
+  }
+
+  function wireToolbar() {
+    var searchInput = qs("#searchInput");
+    var systemFilter = qs("#systemFilter");
+    var addBtn = qs("#addBtn");
+    if (searchInput) {
+      var t;
+      searchInput.addEventListener("input", function () {
+        clearTimeout(t);
+        var val = searchInput.value;
+        t = setTimeout(function () { filterText = val; renderGrid(); }, 120);
+      });
+    }
+    if (systemFilter) {
+      systemFilter.addEventListener("change", function () { filterSystem = systemFilter.value; renderGrid(); });
+    }
+    if (addBtn) addBtn.addEventListener("click", function () { openForm(null); });
+    var emptyBtn = qs("#emptyActionBtn");
+    if (emptyBtn) emptyBtn.addEventListener("click", function () { openForm(null); });
+  }
+
+  function loadInitialData() {
+    var node = qs("#init-data");
+    var data = { scripts: [] };
+    if (node) {
+      try { data = JSON.parse(node.textContent) || { scripts: [] }; } catch (e) {}
+    }
+    scripts = (data && data.scripts) || [];
+  }
+
+  function init() {
+    var root = qs("#root");
+    if (root) root.innerHTML = ROOT_SHELL_HTML;
+    loadInitialData();
+    wireToolbar();
+    wireSidebar();
+    wireCronBuilder();
+    wireBase64Decoder();
+    wireScriptMaker();
+    renderGrid();
+
+    try {
+      if (window.claude && typeof window.claude.use === "function") {
+        window.claude.use("artifact").then(function (cap) {
+          capability = cap;
+          if (!cap) { writable = false; showReadonlyBanner(); }
+        }).catch(function () {
+          capability = null; writable = false; showReadonlyBanner();
+        });
+      } else {
+        capability = null; writable = false; showReadonlyBanner();
+      }
+    } catch (e) {
+      capability = null; writable = false; showReadonlyBanner();
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script>(function(){var e=document.getElementById('app-js');var s=document.createElement('script');s.textContent=e.textContent;document.body.appendChild(s);})();</script>
