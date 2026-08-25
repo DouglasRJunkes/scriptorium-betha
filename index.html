@@ -490,6 +490,7 @@
 
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
   .detail-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; margin: 10px 0 16px; }
+  .detail-export-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-faint); margin: -8px 0 16px; }
   .code-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .code-toolbar span { font-size: 0.75rem; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.04em; }
   .code-block {
@@ -1534,14 +1535,16 @@
     return {
       id: r.id, title: r.title, system: r.system, description: r.description || "",
       script: r.script, author: r.author || "", createdAt: r.created_at, updatedAt: r.updated_at,
-      parametros: r.parametros || []
+      parametros: r.parametros || [],
+      chaveExportacao: r.chave_exportacao || "", validoAte: r.valido_ate || ""
     };
   }
   function scriptToRow(s) {
     return {
       id: s.id, title: s.title, system: s.system, description: s.description || "",
       script: s.script, author: s.author || "", created_at: s.createdAt, updated_at: s.updatedAt,
-      parametros: s.parametros || []
+      parametros: s.parametros || [],
+      chave_exportacao: s.chaveExportacao || "", valido_ate: s.validoAte || null
     };
   }
   function fetchScriptsFromSupabase() {
@@ -1635,6 +1638,12 @@
       if (isNaN(d.getTime())) return "";
       return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
     } catch (e) { return ""; }
+  }
+  function fmtDateOnly(dateStr) {
+    if (!dateStr) return "";
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+    if (!m) return fmtDate(dateStr);
+    return m[3] + "/" + m[2] + "/" + m[1];
   }
   function makeId() {
     return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -1835,6 +1844,24 @@
     rowDesc.appendChild(descInput);
     form.appendChild(rowDesc);
 
+    var rowExport = el("div", { "class": "form-two" });
+
+    var rowChave = el("div", { "class": "form-row" });
+    rowChave.appendChild(el("label", { "for": "f-chave-exportacao" }, "Chave Exportação"));
+    var chaveInput = el("input", { type: "text", id: "f-chave-exportacao", maxlength: "140" });
+    chaveInput.value = existing ? (existing.chaveExportacao || "") : "";
+    rowChave.appendChild(chaveInput);
+    rowExport.appendChild(rowChave);
+
+    var rowValido = el("div", { "class": "form-row" });
+    rowValido.appendChild(el("label", { "for": "f-valido-ate" }, "Válido até"));
+    var validoInput = el("input", { type: "date", id: "f-valido-ate" });
+    validoInput.value = existing ? (existing.validoAte || "") : "";
+    rowValido.appendChild(validoInput);
+    rowExport.appendChild(rowValido);
+
+    form.appendChild(rowExport);
+
     var rowScript = el("div", { "class": "form-row" });
     rowScript.appendChild(el("label", { "for": "f-script" }, "Script"));
     var scriptInput = el("textarea", { id: "f-script", "class": "mono", rows: "14", required: "required", spellcheck: "false" });
@@ -1966,6 +1993,8 @@
       var description = descInput.value.trim();
       var scriptText = scriptInput.value;
       var author = authorInput.value.trim();
+      var chaveExportacao = chaveInput.value.trim();
+      var validoAte = validoInput.value;
       var parametros = qsa(".param-row", paramList).map(function (row) {
         var tipo = qs(".param-tipo", row).value;
         var isList = !!LISTA_TIPOS[tipo];
@@ -1995,14 +2024,14 @@
           return {
             id: s.id, title: title, system: system, description: description,
             script: scriptText, author: author || s.author || "", createdAt: s.createdAt, updatedAt: now,
-            parametros: parametros
+            parametros: parametros, chaveExportacao: chaveExportacao, validoAte: validoAte
           };
         });
       } else {
         next.push({
           id: makeId(), title: title, system: system, description: description,
           script: scriptText, author: author, createdAt: now, updatedAt: now,
-          parametros: parametros
+          parametros: parametros, chaveExportacao: chaveExportacao, validoAte: validoAte
         });
       }
 
@@ -2047,6 +2076,17 @@
     meta.appendChild(el("span", { "class": "card-date" }, "Atualizado em " + fmtDate(s.updatedAt || s.createdAt)));
     body.appendChild(meta);
     body.appendChild(el("p", { "class": "detail-desc" }, s.description || "Sem descricao."));
+
+    if (s.chaveExportacao || s.validoAte) {
+      var exportMeta = el("div", { "class": "detail-export-meta" });
+      if (s.chaveExportacao) {
+        exportMeta.appendChild(el("span", {}, "Chave Exportação: " + s.chaveExportacao));
+      }
+      if (s.validoAte) {
+        exportMeta.appendChild(el("span", {}, "Válido até: " + fmtDateOnly(s.validoAte)));
+      }
+      body.appendChild(exportMeta);
+    }
 
     var codeToolbar = el("div", { "class": "code-toolbar" });
     codeToolbar.appendChild(el("span", {}, "Script"));
