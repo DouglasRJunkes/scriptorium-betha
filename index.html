@@ -250,7 +250,7 @@
     color: var(--text-faint);
     pointer-events: none;
   }
-  input[type="search"], input[type="text"], input[type="number"], select, textarea {
+  input[type="search"], input[type="text"], input[type="number"], input[type="date"], select, textarea {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -259,6 +259,7 @@
     font-size: 0.92rem;
     color: var(--text);
   }
+  input[type="date"] { color-scheme: dark; }
   .search-field input { padding-left: 36px; }
   select#systemFilter { flex: 0 1 220px; }
   input::placeholder, textarea::placeholder { color: var(--text-faint); }
