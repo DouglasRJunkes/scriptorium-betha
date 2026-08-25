@@ -3642,12 +3642,70 @@
     });
   }
 
-  function smBuildExtractScript(query, vars, fileType) {
-    var m = query.match(/percorrer\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
+  function smEscapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Encontra o indice do ")" que fecha o "(" localizado em openParenIdx, contando
+  // parenteses aninhados (ex.: campos: "id, contribuinte(id)") corretamente.
+  function smFindMatchingCloseParen(text, openParenIdx) {
+    var depth = 0;
+    for (var i = openParenIdx; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (ch === "(") depth++;
+      else if (ch === ")") {
+        depth--;
+        if (depth === 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  // Localiza uma chamada "<expr>.busca(<args>)" em text a partir de fromIndex,
+  // tratando corretamente parenteses aninhados dentro dos argumentos.
+  function smFindBuscaCall(text, fromIndex) {
+    var idx = text.indexOf(".busca(", fromIndex || 0);
+    if (idx === -1) return null;
+    var openParenIdx = idx + 6;
+    var closeParenIdx = smFindMatchingCloseParen(text, openParenIdx);
+    if (closeParenIdx === -1) return null;
+    var exprStart = idx;
+    while (exprStart > 0 && /[\w$.]/.test(text.charAt(exprStart - 1))) exprStart--;
+    return {
+      start: exprStart,
+      end: closeParenIdx + 1,
+      exprText: text.slice(exprStart, idx),
+      argsText: text.slice(openParenIdx + 1, closeParenIdx)
+    };
+  }
+
+  // Localiza o bloco "percorrer (<expr>) { iterVar -> ... }" em text a partir de fromIndex.
+  // <expr> pode ser tanto uma variavel simples (dadosX) quanto uma chamada inline
+  // (fonteX.busca(...)), inclusive com quebras de linha e parenteses aninhados.
+  function smFindPercorrerBlock(text, fromIndex) {
+    var re = /percorrer\s*\(/g;
+    re.lastIndex = fromIndex || 0;
+    var m = re.exec(text);
     if (!m) return null;
-    var setup = query.slice(0, m.index).replace(/\s+$/, "");
-    var collectionVar = m[1];
-    var iterVar = m[2];
+    var openParenIdx = m.index + m[0].length - 1;
+    var closeParenIdx = smFindMatchingCloseParen(text, openParenIdx);
+    if (closeParenIdx === -1) return null;
+    var rest = text.slice(closeParenIdx + 1);
+    var armMatch = rest.match(/^\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
+    if (!armMatch) return null;
+    return {
+      start: m.index,
+      collectionExpr: text.slice(openParenIdx + 1, closeParenIdx).trim(),
+      iterVar: armMatch[1]
+    };
+  }
+
+  function smBuildExtractScript(query, vars, fileType) {
+    var block = smFindPercorrerBlock(query, 0);
+    if (!block) return null;
+    var setup = query.slice(0, block.start).replace(/\s+$/, "");
+    var collectionVar = block.collectionExpr;
+    var iterVar = block.iterVar;
     var ext = fileType === "csv" ? "csv" : "txt";
     var fileName = "Resultado." + ext;
     var lines = setup.length ? setup.split("\n") : [];
@@ -3682,16 +3740,43 @@
     }
     if (!template || typeof template !== "object") return { error: "invalidjson" };
 
-    var m = query.match(/percorrer\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
-    if (!m) return { error: "nopercorrer" };
-    var setup = query.slice(0, m.index).replace(/\s+$/, "");
-    var collectionVar = m[1];
-    var iterVar = m[2];
+    var block = smFindPercorrerBlock(query, 0);
+    if (!block) return { error: "nopercorrer" };
+    var setup = query.slice(0, block.start).replace(/\s+$/, "");
+    var collectionExpr = block.collectionExpr;
+    var iterVar = block.iterVar;
 
-    var buscaLineRegex = /^(\s*)([A-Za-z_$][\w$]*)\s*=\s*(.+?)\.busca\(([^)]*)\)\s*$/m;
-    var buscaMatch = setup.match(buscaLineRegex);
-    if (!buscaMatch) return { error: "nobusca" };
-    var buscaArgs = buscaMatch[4];
+    // A consulta pode vir de dois jeitos:
+    //   1) variavel = fonte.busca(...);  percorrer (variavel) { item -> ... }
+    //   2) percorrer (fonte.busca(...)) { item -> ... }
+    var isInlineBusca = false;
+    var buscaExprText, buscaArgs, assignVarName, assignIndent, buscaSpanStart, buscaSpanEnd;
+
+    var bareVarMatch = collectionExpr.match(/^([A-Za-z_$][\w$]*)$/);
+    if (bareVarMatch) {
+      var varName = bareVarMatch[1];
+      var assignRe = new RegExp("^(\\s*)" + smEscapeRegExp(varName) + "\\s*=\\s*", "m");
+      var assignMatch = setup.match(assignRe);
+      var buscaCall = assignMatch ? smFindBuscaCall(setup, assignMatch.index + assignMatch[0].length) : null;
+      if (!assignMatch || !buscaCall || buscaCall.start !== assignMatch.index + assignMatch[0].length) {
+        return { error: "nobusca" };
+      }
+      assignIndent = assignMatch[1];
+      assignVarName = varName;
+      buscaExprText = buscaCall.exprText;
+      buscaArgs = buscaCall.argsText;
+      buscaSpanStart = assignMatch.index;
+      buscaSpanEnd = buscaCall.end;
+    } else {
+      var inlineBusca = smFindBuscaCall(collectionExpr, 0);
+      if (!inlineBusca || inlineBusca.start !== 0 || inlineBusca.end !== collectionExpr.length) {
+        return { error: "nobusca" };
+      }
+      isInlineBusca = true;
+      buscaExprText = inlineBusca.exprText;
+      buscaArgs = inlineBusca.argsText;
+    }
+
     var criterioMatch = buscaArgs.match(/criterio\s*:\s*([A-Za-z_$][\w$]*)/);
     var camposMatch = buscaArgs.match(/campos\s*:\s*"([^"]*)"/);
     var filtroVarName = criterioMatch ? criterioMatch[1] : null;
@@ -3701,7 +3786,7 @@
 
     var filtroMap = {};
     if (filtroVarName) {
-      var filtroAssignRegex = new RegExp("^\\s*" + filtroVarName + "\\s*=\\s*\"([^\"]*)\"", "m");
+      var filtroAssignRegex = new RegExp("^\\s*" + smEscapeRegExp(filtroVarName) + "\\s*=\\s*\"([^\"]*)\"", "m");
       var filtroAssignMatch = setup.match(filtroAssignRegex);
       if (filtroAssignMatch) {
         filtroAssignMatch[1].split(/\s+(?:and|AND|&&)\s+/).forEach(function (clause) {
@@ -3768,21 +3853,37 @@
       if (!already) mergedCampos.push(v);
     });
 
-    var newBuscaLine = buscaMatch[1] + buscaMatch[2] + " = " + buscaMatch[3] +
-      ".busca(criterio: " + (filtroVarName || "") + ", campos: \"" + mergedCampos.join(", ") + "\")";
-    var newSetup = setup.slice(0, buscaMatch.index) + newBuscaLine + setup.slice(buscaMatch.index + buscaMatch[0].length);
+    var newBuscaArgs = "criterio: " + (filtroVarName || "") + ", campos: \"" + mergedCampos.join(", ") + "\"";
+    var newBuscaCall = buscaExprText + ".busca(" + newBuscaArgs + ")";
 
-    var lines = newSetup.length ? newSetup.split("\n") : [];
-    lines.push("payload = []");
-    if (placeholders.length) {
-      lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
-      placeholders.forEach(function (p) {
-        lines.push("//   - " + p);
-      });
+    var lines;
+    if (isInlineBusca) {
+      lines = setup.length ? setup.split("\n") : [];
+      lines.push("payload = []");
+      if (placeholders.length) {
+        lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
+        placeholders.forEach(function (p) {
+          lines.push("//   - " + p);
+        });
+      }
+      lines.push("percorrer (" + newBuscaCall + ") { " + iterVar + " ->");
+      lines.push("    payload << " + payloadLiteral);
+      lines.push("}");
+    } else {
+      var newAssignLine = assignIndent + assignVarName + " = " + newBuscaCall;
+      var newSetup = setup.slice(0, buscaSpanStart) + newAssignLine + setup.slice(buscaSpanEnd);
+      lines = newSetup.length ? newSetup.split("\n") : [];
+      lines.push("payload = []");
+      if (placeholders.length) {
+        lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
+        placeholders.forEach(function (p) {
+          lines.push("//   - " + p);
+        });
+      }
+      lines.push("percorrer (" + collectionExpr + ") { " + iterVar + " ->");
+      lines.push("    payload << " + payloadLiteral);
+      lines.push("}");
     }
-    lines.push("percorrer (" + collectionVar + ") { " + iterVar + " ->");
-    lines.push("    payload << " + payloadLiteral);
-    lines.push("}");
     lines.push("resposta = Http.servico(\"" + apiUrl + "\")");
     lines.push("    .chaveIntegracao(Variavel.CHAVE_INTEGRACAO)");
     var allowedMethods = ["PUT", "POST", "PATCH", "DELETE"];
