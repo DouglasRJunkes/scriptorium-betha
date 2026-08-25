@@ -1024,7 +1024,7 @@
           '<div class="empty-state" id="skillsEmptyState" hidden>' +
             '<div class="empty-icon" aria-hidden="true">&lt;/&gt;</div>' +
             '<h2 id="skillsEmptyTitle">Nenhuma skill por aqui ainda</h2>' +
-            '<p id="skillsEmptyText">Adicione a primeira skill (.md) para comecar o repositorio.</p>' +
+            '<p id="skillsEmptyText">Adicione a primeira skill para comecar o repositorio.</p>' +
             '<button class="btn btn-primary write-only" id="skillsEmptyActionBtn" type="button">+ Nova skill</button>' +
           '</div>' +
         '</section>' +
@@ -2044,7 +2044,7 @@
         var actionBtn = qs("#skillsEmptyActionBtn");
         if (claudeSkills.length === 0) {
           if (titleEl) titleEl.textContent = "Nenhuma skill por aqui ainda";
-          if (textEl) textEl.textContent = "Adicione a primeira skill (.md) para comecar o repositorio.";
+          if (textEl) textEl.textContent = "Adicione a primeira skill para comecar o repositorio.";
           if (actionBtn) { actionBtn.textContent = "+ Nova skill"; actionBtn.className = "btn btn-primary write-only"; actionBtn.onclick = function () { openSkillForm(null); }; }
         } else {
           if (titleEl) titleEl.textContent = "Nenhum resultado encontrado";
@@ -2492,12 +2492,12 @@
     form.appendChild(rowDesc);
 
     var rowFile = el("div", { "class": "form-row" });
-    rowFile.appendChild(el("label", { "for": "sk-file" }, "Arquivo (.md)"));
-    var fileInput = el("input", { type: "file", id: "sk-file", accept: ".md,text/markdown" });
+    rowFile.appendChild(el("label", { "for": "sk-file" }, "Arquivo"));
+    var fileInput = el("input", { type: "file", id: "sk-file" });
     rowFile.appendChild(fileInput);
     var fileHintText = existing && existing.arquivoNome
       ? ("Arquivo atual: " + existing.arquivoNome + " (envie um novo arquivo para substituir).")
-      : "Selecione um arquivo .md.";
+      : "Selecione um arquivo.";
     var fileHint = el("p", { "class": "empty-hint", id: "sk-file-hint", style: "margin:6px 0 0" }, fileHintText);
     rowFile.appendChild(fileHint);
     form.appendChild(rowFile);
@@ -2532,12 +2532,7 @@
         return;
       }
       if (!file && !(existing && existing.arquivoConteudo)) {
-        errNote.textContent = "Selecione um arquivo .md.";
-        errNote.hidden = false;
-        return;
-      }
-      if (file && !/\.md$/i.test(file.name)) {
-        errNote.textContent = "O arquivo precisa ter extensao .md.";
+        errNote.textContent = "Selecione um arquivo.";
         errNote.hidden = false;
         return;
       }
@@ -2790,14 +2785,14 @@
         fallbackCopy(text, done);
       }
     });
-    var downloadBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Baixar .md");
+    var downloadBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Baixar arquivo");
     downloadBtn.addEventListener("click", function () {
       try {
-        var blob = new Blob([sk.arquivoConteudo || ""], { type: "text/markdown" });
+        var blob = new Blob([sk.arquivoConteudo || ""], { type: "text/plain" });
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
         a.href = url;
-        a.download = sk.arquivoNome || (sk.nome + ".md");
+        a.download = sk.arquivoNome || sk.nome;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
