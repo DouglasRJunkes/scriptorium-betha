@@ -969,6 +969,10 @@
             '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>' +
             '<span>Reservatório Scripts</span>' +
           '</button>' +
+          '<button class="nav-item" type="button" data-page="claudeskills">' +
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"></path><path d="M19 15l0.9 2.1L22 18l-2.1 0.9L19 21l-0.9-2.1L16 18l2.1-0.9L19 15z"></path></svg>' +
+            '<span>Reservatório Claude Skills</span>' +
+          '</button>' +
           '<button class="nav-item" type="button" data-page="apimaker">' +
             '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 9 4 12 8 15"></polyline><polyline points="16 9 20 12 16 15"></polyline></svg>' +
             '<span>Script Maker</span>' +
@@ -1004,6 +1008,24 @@
             '<h2 id="emptyTitle">Nenhum script por aqui ainda</h2>' +
             '<p id="emptyText">Adicione o primeiro script para comecar o repositorio da equipe.</p>' +
             '<button class="btn btn-primary write-only" id="emptyActionBtn" type="button">+ Novo script</button>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-claudeskills" hidden>' +
+          '<div class="page-toolbar">' +
+            '<div class="field search-field">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>' +
+              '<input type="search" id="skillSearchInput" placeholder="Buscar por nome ou descricao" aria-label="Buscar por nome ou descricao" />' +
+            '</div>' +
+            '<button class="btn btn-primary write-only" id="addSkillBtn" type="button">+ Nova skill</button>' +
+          '</div>' +
+          '<div class="banner write-only-hide" id="skillsReadonlyBanner" hidden>Modo somente leitura: voce pode buscar e visualizar, mas nao pode salvar alteracoes neste visualizador.</div>' +
+          '<div class="stats" id="skillsStats"></div>' +
+          '<div class="grid" id="skillsGrid"></div>' +
+          '<div class="empty-state" id="skillsEmptyState" hidden>' +
+            '<div class="empty-icon" aria-hidden="true">&lt;/&gt;</div>' +
+            '<h2 id="skillsEmptyTitle">Nenhuma skill por aqui ainda</h2>' +
+            '<p id="skillsEmptyText">Adicione a primeira skill (.md) para comecar o repositorio.</p>' +
+            '<button class="btn btn-primary write-only" id="skillsEmptyActionBtn" type="button">+ Nova skill</button>' +
           '</div>' +
         '</section>' +
         '<section class="page" id="page-apimaker" hidden>' +
@@ -1600,6 +1622,8 @@
   var scripts = [];
   var filterText = "";
   var filterSystem = "";
+  var claudeSkills = [];
+  var skillFilterText = "";
   var capability = null;
   var writable = true;
   var lastFocused = null;
@@ -1640,6 +1664,20 @@
       script: s.script, author: s.author || "", created_at: s.createdAt, updated_at: s.updatedAt,
       parametros: s.parametros || [],
       chave_exportacao: s.chaveExportacao || "", valido_ate: s.validoAte || null
+    };
+  }
+  function mapRowToSkill(r) {
+    return {
+      id: r.id, nome: r.nome, descricao: r.descricao || "",
+      arquivoNome: r.arquivo_nome || "", arquivoConteudo: r.arquivo_conteudo || "",
+      author: r.author || "", createdAt: r.created_at, updatedAt: r.updated_at
+    };
+  }
+  function skillToRow(sk) {
+    return {
+      id: sk.id, nome: sk.nome, descricao: sk.descricao || "",
+      arquivo_nome: sk.arquivoNome || "", arquivo_conteudo: sk.arquivoConteudo || "",
+      author: sk.author || "", created_at: sk.createdAt, updated_at: sk.updatedAt
     };
   }
   function fetchScriptsFromSupabase() {
@@ -1705,6 +1743,71 @@
       renderGrid();
     }).catch(function () {
       showToast("Nao foi possivel carregar os scripts do banco de dados.", "error");
+    });
+  }
+  function fetchSkillsFromSupabase() {
+    return fetch(SUPABASE_URL + "/rest/v1/claude_skills?select=*&order=updated_at.desc", {
+      headers: supabaseHeaders()
+    }).then(function (res) {
+      if (!res.ok) throw new Error("http_" + res.status);
+      return res.json();
+    }).then(function (rows) {
+      return (rows || []).map(mapRowToSkill);
+    });
+  }
+  function diffSkills(prev, next) {
+    var prevMap = {};
+    prev.forEach(function (sk) { prevMap[sk.id] = sk; });
+    var nextMap = {};
+    next.forEach(function (sk) { nextMap[sk.id] = sk; });
+    var inserted = next.filter(function (sk) { return !prevMap[sk.id]; });
+    var deleted = prev.filter(function (sk) { return !nextMap[sk.id]; });
+    var updated = next.filter(function (sk) {
+      var p = prevMap[sk.id];
+      return p && p.updatedAt !== sk.updatedAt;
+    });
+    return { inserted: inserted, deleted: deleted, updated: updated };
+  }
+  function attemptSkillsSupabaseSave(nextSkills, opts) {
+    var diff = diffSkills(claudeSkills, nextSkills);
+    var ops = [];
+    diff.inserted.forEach(function (sk) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/claude_skills", {
+        method: "POST",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify([skillToRow(sk)])
+      }));
+    });
+    diff.updated.forEach(function (sk) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/claude_skills?id=eq." + encodeURIComponent(sk.id), {
+        method: "PATCH",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" }),
+        body: JSON.stringify(skillToRow(sk))
+      }));
+    });
+    diff.deleted.forEach(function (sk) {
+      ops.push(fetch(SUPABASE_URL + "/rest/v1/claude_skills?id=eq." + encodeURIComponent(sk.id), {
+        method: "DELETE",
+        headers: supabaseHeaders({ "Prefer": "return=minimal" })
+      }));
+    });
+    Promise.all(ops).then(function (results) {
+      var failed = results.filter(function (r) { return !r.ok; });
+      if (failed.length) { throw new Error("save_failed"); }
+      claudeSkills = nextSkills;
+      renderSkillsGrid();
+      closeModal();
+      showToast("Alteracoes salvas.");
+    }).catch(function () {
+      if (opts.onError) opts.onError("Nao foi possivel salvar no banco de dados. Tente novamente.");
+    });
+  }
+  function loadSkillsFromSupabase() {
+    fetchSkillsFromSupabase().then(function (rows) {
+      claudeSkills = rows;
+      renderSkillsGrid();
+    }).catch(function () {
+      showToast("Nao foi possivel carregar as skills do banco de dados.", "error");
     });
   }
 
@@ -1773,6 +1876,8 @@
     document.body.classList.add("readonly");
     var b = qs("#readonlyBanner");
     if (b) b.hidden = false;
+    var b2 = qs("#skillsReadonlyBanner");
+    if (b2) b2.hidden = false;
   }
 
   function uniqueSystems() {
@@ -1825,6 +1930,41 @@
     return card;
   }
 
+  function buildSkillCard(sk) {
+    var card = el("article", { "class": "card" });
+
+    var top = el("div", { "class": "card-top" });
+    var badge = el("span", { "class": "badge" }, sk.arquivoNome || "SKILL");
+    badge.style.setProperty("--badge-h", String(hueFor(sk.arquivoNome || sk.nome)));
+    top.appendChild(badge);
+    top.appendChild(el("span", { "class": "card-date" }, fmtDate(sk.updatedAt || sk.createdAt)));
+    card.appendChild(top);
+
+    var title = el("h3", { "class": "card-title", tabindex: "0", role: "button" }, sk.nome);
+    title.addEventListener("click", function () { openSkillDetail(sk.id); });
+    title.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSkillDetail(sk.id); } });
+    card.appendChild(title);
+
+    card.appendChild(el("p", { "class": "card-desc" }, sk.descricao || ""));
+
+    var footer = el("div", { "class": "card-footer" });
+    var viewBtn = el("button", { "class": "card-link", type: "button" }, "Ver skill ->");
+    viewBtn.addEventListener("click", function () { openSkillDetail(sk.id); });
+    footer.appendChild(viewBtn);
+
+    var actions = el("div", { "class": "card-actions write-only" });
+    var editBtn = el("button", { "class": "icon-btn", type: "button", title: "Editar", "aria-label": "Editar" }, "✎");
+    editBtn.addEventListener("click", function () { openSkillForm(sk.id); });
+    var delBtn = el("button", { "class": "icon-btn danger", type: "button", title: "Excluir", "aria-label": "Excluir" }, "✕");
+    delBtn.addEventListener("click", function () { openSkillDetail(sk.id, true); });
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    footer.appendChild(actions);
+
+    card.appendChild(footer);
+    return card;
+  }
+
   function renderGrid() {
     var grid = qs("#grid");
     var emptyState = qs("#emptyState");
@@ -1868,6 +2008,61 @@
     var si = qs("#searchInput"); if (si) si.value = "";
     var sf = qs("#systemFilter"); if (sf) sf.value = "";
     renderGrid();
+  }
+
+  function filteredSkills() {
+    var q = normalize(skillFilterText);
+    var list = claudeSkills.filter(function (sk) {
+      if (!q) return true;
+      return normalize(sk.nome).indexOf(q) > -1 ||
+        normalize(sk.descricao).indexOf(q) > -1 ||
+        normalize(sk.arquivoNome).indexOf(q) > -1;
+    });
+    return list.slice().sort(function (a, b) {
+      return String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""));
+    });
+  }
+
+  function renderSkillsGrid() {
+    var grid = qs("#skillsGrid");
+    var emptyState = qs("#skillsEmptyState");
+    var stats = qs("#skillsStats");
+    if (!grid) return;
+    grid.innerHTML = "";
+    var list = filteredSkills();
+
+    if (stats) {
+      stats.textContent = claudeSkills.length + (claudeSkills.length === 1 ? " skill" : " skills");
+    }
+
+    if (list.length === 0) {
+      grid.hidden = true;
+      if (emptyState) {
+        emptyState.hidden = false;
+        var titleEl = qs("#skillsEmptyTitle");
+        var textEl = qs("#skillsEmptyText");
+        var actionBtn = qs("#skillsEmptyActionBtn");
+        if (claudeSkills.length === 0) {
+          if (titleEl) titleEl.textContent = "Nenhuma skill por aqui ainda";
+          if (textEl) textEl.textContent = "Adicione a primeira skill (.md) para comecar o repositorio.";
+          if (actionBtn) { actionBtn.textContent = "+ Nova skill"; actionBtn.className = "btn btn-primary write-only"; actionBtn.onclick = function () { openSkillForm(null); }; }
+        } else {
+          if (titleEl) titleEl.textContent = "Nenhum resultado encontrado";
+          if (textEl) textEl.textContent = "Tente ajustar a busca.";
+          if (actionBtn) { actionBtn.textContent = "Limpar busca"; actionBtn.className = "btn btn-secondary"; actionBtn.onclick = function () { clearSkillFilters(); }; }
+        }
+      }
+    } else {
+      grid.hidden = false;
+      if (emptyState) emptyState.hidden = true;
+      list.forEach(function (sk) { grid.appendChild(buildSkillCard(sk)); });
+    }
+  }
+
+  function clearSkillFilters() {
+    skillFilterText = "";
+    var si = qs("#skillSearchInput"); if (si) si.value = "";
+    renderSkillsGrid();
   }
 
   function closeModal() {
@@ -2259,6 +2454,143 @@
     });
   }
 
+  function openSkillForm(id) {
+    if (!writable) { showToast("Este repositorio esta em modo somente leitura para voce.", "error"); return; }
+    lastFocused = document.activeElement;
+    var existing = id ? claudeSkills.filter(function (sk) { return sk.id === id; })[0] : null;
+    var layer = qs("#modalLayer");
+    layer.innerHTML = "";
+
+    var overlay = el("div", { "class": "modal-overlay", role: "presentation" });
+    overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener("keydown", onOverlayKeydown);
+
+    var panel = el("div", { "class": "modal-panel", role: "dialog", "aria-modal": "true", "aria-labelledby": "skillFormTitle" });
+
+    var header = el("div", { "class": "modal-header" });
+    header.appendChild(el("h2", { id: "skillFormTitle" }, existing ? "Editar skill" : "Nova skill"));
+    var closeBtn = el("button", { "class": "icon-btn", type: "button", "aria-label": "Fechar" }, "✕");
+    closeBtn.addEventListener("click", closeModal);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    var body = el("div", { "class": "modal-body" });
+    var form = el("form", { id: "skillForm" });
+
+    var rowNome = el("div", { "class": "form-row" });
+    rowNome.appendChild(el("label", { "for": "sk-nome" }, "Nome"));
+    var nomeInput = el("input", { type: "text", id: "sk-nome", required: "required", maxlength: "140" });
+    nomeInput.value = existing ? existing.nome : "";
+    rowNome.appendChild(nomeInput);
+    form.appendChild(rowNome);
+
+    var rowDesc = el("div", { "class": "form-row" });
+    rowDesc.appendChild(el("label", { "for": "sk-desc" }, "Descricao"));
+    var descInput = el("textarea", { id: "sk-desc", rows: "3", required: "required", maxlength: "600" });
+    descInput.value = existing ? existing.descricao : "";
+    rowDesc.appendChild(descInput);
+    form.appendChild(rowDesc);
+
+    var rowFile = el("div", { "class": "form-row" });
+    rowFile.appendChild(el("label", { "for": "sk-file" }, "Arquivo (.md)"));
+    var fileInput = el("input", { type: "file", id: "sk-file", accept: ".md,text/markdown" });
+    rowFile.appendChild(fileInput);
+    var fileHintText = existing && existing.arquivoNome
+      ? ("Arquivo atual: " + existing.arquivoNome + " (envie um novo arquivo para substituir).")
+      : "Selecione um arquivo .md.";
+    var fileHint = el("p", { "class": "empty-hint", id: "sk-file-hint", style: "margin:6px 0 0" }, fileHintText);
+    rowFile.appendChild(fileHint);
+    form.appendChild(rowFile);
+
+    body.appendChild(form);
+    panel.appendChild(body);
+
+    var footer = el("div", { "class": "modal-footer" });
+    var errNote = el("span", { "class": "footer-error", id: "skillFormError" });
+    errNote.hidden = true;
+    footer.appendChild(errNote);
+    var cancelBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Cancelar");
+    cancelBtn.addEventListener("click", closeModal);
+    var saveBtn = el("button", { "class": "btn btn-primary", type: "submit", form: "skillForm" }, existing ? "Salvar alteracoes" : "Adicionar skill");
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    layer.appendChild(overlay);
+    nomeInput.focus();
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var nome = nomeInput.value.trim();
+      var descricao = descInput.value.trim();
+      var file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+      if (!nome || !descricao) {
+        errNote.textContent = "Preencha nome e descricao.";
+        errNote.hidden = false;
+        return;
+      }
+      if (!file && !(existing && existing.arquivoConteudo)) {
+        errNote.textContent = "Selecione um arquivo .md.";
+        errNote.hidden = false;
+        return;
+      }
+      if (file && !/\.md$/i.test(file.name)) {
+        errNote.textContent = "O arquivo precisa ter extensao .md.";
+        errNote.hidden = false;
+        return;
+      }
+      errNote.hidden = true;
+
+      saveBtn.disabled = true; cancelBtn.disabled = true;
+      saveBtn.textContent = "Salvando...";
+
+      function finishSave(arquivoNome, arquivoConteudo) {
+        var now = new Date().toISOString();
+        var next = claudeSkills.slice();
+        if (existing) {
+          next = next.map(function (sk) {
+            if (sk.id !== existing.id) return sk;
+            return {
+              id: sk.id, nome: nome, descricao: descricao,
+              arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo,
+              author: sk.author || getAuthorDefault() || "", createdAt: sk.createdAt, updatedAt: now
+            };
+          });
+        } else {
+          next.push({
+            id: makeId(), nome: nome, descricao: descricao,
+            arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo,
+            author: getAuthorDefault() || "", createdAt: now, updatedAt: now
+          });
+        }
+        publishSkills(next, {
+          onError: function (msg) {
+            saveBtn.disabled = false; cancelBtn.disabled = false;
+            saveBtn.textContent = existing ? "Salvar alteracoes" : "Adicionar skill";
+            errNote.textContent = msg;
+            errNote.hidden = false;
+          }
+        });
+      }
+
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function () { finishSave(file.name, String(reader.result || "")); };
+        reader.onerror = function () {
+          saveBtn.disabled = false; cancelBtn.disabled = false;
+          saveBtn.textContent = existing ? "Salvar alteracoes" : "Adicionar skill";
+          errNote.textContent = "Nao foi possivel ler o arquivo selecionado.";
+          errNote.hidden = false;
+        };
+        reader.readAsText(file);
+      } else {
+        finishSave(existing.arquivoNome, existing.arquivoConteudo);
+      }
+    });
+  }
+
   function openDetail(id, confirmDelete) {
     var s = scripts.filter(function (x) { return x.id === id; })[0];
     if (!s) return;
@@ -2392,6 +2724,132 @@
           confirmBtn.textContent = "Excluindo...";
           var next = scripts.filter(function (x) { return x.id !== s.id; });
           publishScripts(next, {
+            onError: function (msg) {
+              confirmBtn.disabled = false; cancel.disabled = false;
+              confirmBtn.textContent = "Sim, excluir";
+              showToast(msg, "error");
+            }
+          });
+        });
+        actions.appendChild(cancel);
+        actions.appendChild(confirmBtn);
+        box.appendChild(actions);
+        deleteArea.appendChild(box);
+      }
+    }
+    renderDeleteArea(!!confirmDelete);
+    footer.appendChild(deleteArea);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    layer.appendChild(overlay);
+    closeBtn.focus();
+  }
+
+  function openSkillDetail(id, confirmDelete) {
+    var sk = claudeSkills.filter(function (x) { return x.id === id; })[0];
+    if (!sk) return;
+    lastFocused = document.activeElement;
+    var layer = qs("#modalLayer");
+    layer.innerHTML = "";
+
+    var overlay = el("div", { "class": "modal-overlay", role: "presentation" });
+    overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener("keydown", onOverlayKeydown);
+
+    var panel = el("div", { "class": "modal-panel wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "skillDetailTitle" });
+
+    var header = el("div", { "class": "modal-header" });
+    header.appendChild(el("h2", { id: "skillDetailTitle" }, sk.nome));
+    var closeBtn = el("button", { "class": "icon-btn", type: "button", "aria-label": "Fechar" }, "✕");
+    closeBtn.addEventListener("click", closeModal);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    var body = el("div", { "class": "modal-body" });
+    var meta = el("div", { "class": "detail-meta" });
+    if (sk.arquivoNome) {
+      var badge = el("span", { "class": "badge" }, sk.arquivoNome);
+      badge.style.setProperty("--badge-h", String(hueFor(sk.arquivoNome)));
+      meta.appendChild(badge);
+    }
+    meta.appendChild(el("span", { "class": "card-date" }, "Atualizado em " + fmtDate(sk.updatedAt || sk.createdAt)));
+    body.appendChild(meta);
+    body.appendChild(el("p", { "class": "detail-desc" }, sk.descricao || "Sem descricao."));
+
+    var codeToolbar = el("div", { "class": "code-toolbar" });
+    codeToolbar.appendChild(el("span", {}, sk.arquivoNome || "Conteudo do arquivo"));
+    var toolbarActions = el("div", { style: "display:flex; gap:8px" });
+    var copyBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Copiar");
+    copyBtn.addEventListener("click", function () {
+      var text = sk.arquivoConteudo || "";
+      var done = function () { copyBtn.textContent = "Copiado!"; setTimeout(function () { copyBtn.textContent = "Copiar"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+    var downloadBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Baixar .md");
+    downloadBtn.addEventListener("click", function () {
+      try {
+        var blob = new Blob([sk.arquivoConteudo || ""], { type: "text/markdown" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = sk.arquivoNome || (sk.nome + ".md");
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      } catch (e) {
+        showToast("Nao foi possivel baixar o arquivo.", "error");
+      }
+    });
+    toolbarActions.appendChild(copyBtn);
+    toolbarActions.appendChild(downloadBtn);
+    codeToolbar.appendChild(toolbarActions);
+    body.appendChild(codeToolbar);
+
+    var codeBlock = el("div", { "class": "code-block" });
+    var codeEl = el("code");
+    codeEl.textContent = sk.arquivoConteudo || "";
+    codeBlock.appendChild(codeEl);
+    body.appendChild(codeBlock);
+
+    var footerMetaParts = [];
+    if (sk.author) footerMetaParts.push("Adicionado por " + sk.author);
+    footerMetaParts.push("criado em " + fmtDate(sk.createdAt));
+    body.appendChild(el("p", { "class": "detail-footer-meta" }, footerMetaParts.join(" - ")));
+
+    panel.appendChild(body);
+
+    var footer = el("div", { "class": "modal-footer write-only" });
+    var deleteArea = el("div", { style: "width:100%" });
+
+    function renderDeleteArea(showConfirm) {
+      deleteArea.innerHTML = "";
+      if (!showConfirm) {
+        var wrap = el("div", { style: "display:flex; justify-content:flex-end; gap:8px; width:100%" });
+        var editBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Editar");
+        editBtn.addEventListener("click", function () { closeModal(); openSkillForm(sk.id); });
+        var delBtn = el("button", { "class": "btn btn-danger", type: "button" }, "Excluir");
+        delBtn.addEventListener("click", function () { renderDeleteArea(true); });
+        wrap.appendChild(editBtn);
+        wrap.appendChild(delBtn);
+        deleteArea.appendChild(wrap);
+      } else {
+        var box = el("div", { "class": "confirm-box" });
+        box.appendChild(el("p", {}, "Excluir esta skill definitivamente?"));
+        var actions = el("div", { "class": "confirm-actions" });
+        var cancel = el("button", { "class": "btn btn-secondary", type: "button" }, "Cancelar");
+        cancel.addEventListener("click", function () { renderDeleteArea(false); });
+        var confirmBtn = el("button", { "class": "btn btn-danger", type: "button" }, "Sim, excluir");
+        confirmBtn.addEventListener("click", function () {
+          confirmBtn.disabled = true; cancel.disabled = true;
+          confirmBtn.textContent = "Excluindo...";
+          var next = claudeSkills.filter(function (x) { return x.id !== sk.id; });
+          publishSkills(next, {
             onError: function (msg) {
               confirmBtn.disabled = false; cancel.disabled = false;
               confirmBtn.textContent = "Sim, excluir";
@@ -3566,10 +4024,10 @@
     wireSmCopy();
   }
 
-  function buildDocument(nextScripts) {
+  function buildDocument(nextScripts, nextSkills) {
     var styleText = qs("#app-style").textContent;
     var appJsText = qs("#app-js").textContent;
-    var dataJson = escapeCloseScript(JSON.stringify({ scripts: nextScripts }));
+    var dataJson = escapeCloseScript(JSON.stringify({ scripts: nextScripts, claudeSkills: nextSkills }));
     var html = "<!doctype html>\n<html>\n<head>\n" +
       '<meta charset="utf-8">\n' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
@@ -3593,7 +4051,7 @@
       return;
     }
     if (capability) {
-      attemptPublish(nextScripts, opts, false);
+      attemptPublish(nextScripts, claudeSkills, opts, false);
       return;
     }
     if (supabaseConfigured()) {
@@ -3604,8 +4062,26 @@
     else showToast("Nao e possivel salvar alteracoes neste visualizador.", "error");
   }
 
-  function attemptPublish(nextScripts, opts, isRetry) {
-    var html = buildDocument(nextScripts);
+  function publishSkills(nextSkills, opts) {
+    opts = opts || {};
+    if (!writable) {
+      if (opts.onError) opts.onError("Este repositorio esta em modo somente leitura para voce.");
+      return;
+    }
+    if (capability) {
+      attemptPublish(scripts, nextSkills, opts, false);
+      return;
+    }
+    if (supabaseConfigured()) {
+      attemptSkillsSupabaseSave(nextSkills, opts);
+      return;
+    }
+    if (opts.onError) opts.onError("Nao e possivel salvar alteracoes neste visualizador.");
+    else showToast("Nao e possivel salvar alteracoes neste visualizador.", "error");
+  }
+
+  function attemptPublish(nextScripts, nextSkills, opts, isRetry) {
+    var html = buildDocument(nextScripts, nextSkills);
     capability.publish(html).then(function () {
       // success: this view reloads automatically to the new version.
     }).catch(function (err) {
@@ -3627,7 +4103,7 @@
         return;
       }
       if (code === "too_large") {
-        if (opts.onError) opts.onError("O script e grande demais para ser salvo.");
+        if (opts.onError) opts.onError("O arquivo e grande demais para ser salvo.");
         return;
       }
       if (code === "rate_limited") {
@@ -3635,14 +4111,14 @@
         return;
       }
       if (code === "upstream_error" && !isRetry) {
-        setTimeout(function () { attemptPublish(nextScripts, opts, true); }, 700 + Math.random() * 500);
+        setTimeout(function () { attemptPublish(nextScripts, nextSkills, opts, true); }, 700 + Math.random() * 500);
         return;
       }
       if (opts.onError) opts.onError("Nao foi possivel salvar. Tente novamente.");
     });
   }
 
-  var PAGES = ["scripts", "apimaker", "cron", "base64", "bfcscript", "apistributos", "apisprocuradoria", "apisenotafly", "apisenotacloud", "apilivroeletronico", "apisfolha", "apisrh", "apisponto", "apiseducacao", "apissaude", "apiscontabil", "apisplanejamento", "apistesouraria", "apisconvenios", "apistransparencia", "apisalmoxarifado", "apiscompras", "apiscontratos", "apisfrotas", "apispatrimonio", "criticastributos", "criticasgestaofiscal", "criticasprotocolo", "criticasfolha", "criticaseducacao", "criticascontabil", "manualwebservicebb", "manualintegracaocbm", "manualpixbbcidadaoweb", "manualregistrosicoob", "manualregistrocaixa"];
+  var PAGES = ["scripts", "claudeskills", "apimaker", "cron", "base64", "bfcscript", "apistributos", "apisprocuradoria", "apisenotafly", "apisenotacloud", "apilivroeletronico", "apisfolha", "apisrh", "apisponto", "apiseducacao", "apissaude", "apiscontabil", "apisplanejamento", "apistesouraria", "apisconvenios", "apistransparencia", "apisalmoxarifado", "apiscompras", "apiscontratos", "apisfrotas", "apispatrimonio", "criticastributos", "criticasgestaofiscal", "criticasprotocolo", "criticasfolha", "criticaseducacao", "criticascontabil", "manualwebservicebb", "manualintegracaocbm", "manualpixbbcidadaoweb", "manualregistrosicoob", "manualregistrocaixa"];
 
   function switchPage(page) {
     if (PAGES.indexOf(page) === -1) return;
@@ -3695,13 +4171,30 @@
     if (emptyBtn) emptyBtn.addEventListener("click", function () { openForm(null); });
   }
 
+  function wireSkillsToolbar() {
+    var searchInput = qs("#skillSearchInput");
+    var addBtn = qs("#addSkillBtn");
+    if (searchInput) {
+      var t;
+      searchInput.addEventListener("input", function () {
+        clearTimeout(t);
+        var val = searchInput.value;
+        t = setTimeout(function () { skillFilterText = val; renderSkillsGrid(); }, 120);
+      });
+    }
+    if (addBtn) addBtn.addEventListener("click", function () { openSkillForm(null); });
+    var emptyBtn = qs("#skillsEmptyActionBtn");
+    if (emptyBtn) emptyBtn.addEventListener("click", function () { openSkillForm(null); });
+  }
+
   function loadInitialData() {
     var node = qs("#init-data");
-    var data = { scripts: [] };
+    var data = { scripts: [], claudeSkills: [] };
     if (node) {
-      try { data = JSON.parse(node.textContent) || { scripts: [] }; } catch (e) {}
+      try { data = JSON.parse(node.textContent) || { scripts: [], claudeSkills: [] }; } catch (e) {}
     }
     scripts = (data && data.scripts) || [];
+    claudeSkills = (data && data.claudeSkills) || [];
   }
 
   function init() {
@@ -3709,12 +4202,14 @@
     if (root) root.innerHTML = ROOT_SHELL_HTML;
     loadInitialData();
     wireToolbar();
+    wireSkillsToolbar();
     wireSidebar();
     wireNavFolders();
     wireCronBuilder();
     wireBase64Decoder();
     wireScriptMaker();
     renderGrid();
+    renderSkillsGrid();
 
     try {
       if (window.claude && typeof window.claude.use === "function") {
@@ -3728,6 +4223,7 @@
         capability = null;
         writable = true;
         loadFromSupabase();
+        loadSkillsFromSupabase();
       } else {
         capability = null; writable = false; showReadonlyBanner();
       }
