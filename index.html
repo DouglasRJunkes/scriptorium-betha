@@ -1670,6 +1670,7 @@
     return {
       id: r.id, nome: r.nome, descricao: r.descricao || "",
       arquivoNome: r.arquivo_nome || "", arquivoConteudo: r.arquivo_conteudo || "",
+      arquivoEncoding: r.arquivo_encoding || "texto",
       author: r.author || "", createdAt: r.created_at, updatedAt: r.updated_at
     };
   }
@@ -1677,6 +1678,7 @@
     return {
       id: sk.id, nome: sk.nome, descricao: sk.descricao || "",
       arquivo_nome: sk.arquivoNome || "", arquivo_conteudo: sk.arquivoConteudo || "",
+      arquivo_encoding: sk.arquivoEncoding || "texto",
       author: sk.author || "", created_at: sk.createdAt, updated_at: sk.updatedAt
     };
   }
@@ -2454,6 +2456,26 @@
     });
   }
 
+  // Arquivos de skill podem ser texto (.md, .txt) ou binarios (.skill, que e um zip).
+  // Postgres/PostgREST rejeitam bytes NUL (0x00) em colunas de texto, entao qualquer
+  // arquivo que nao seja UTF-8 valido e sem NUL e guardado como base64 nesta coluna.
+  function arrayBufferToBase64(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var binary = "";
+    var chunkSize = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunkSize) {
+      var chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, chunk);
+    }
+    return btoa(binary);
+  }
+  function base64ToBlob(base64, mimeType) {
+    var binary = atob(base64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mimeType || "application/octet-stream" });
+  }
+
   function openSkillForm(id) {
     if (!writable) { showToast("Este repositorio esta em modo somente leitura para voce.", "error"); return; }
     lastFocused = document.activeElement;
@@ -2541,7 +2563,7 @@
       saveBtn.disabled = true; cancelBtn.disabled = true;
       saveBtn.textContent = "Salvando...";
 
-      function finishSave(arquivoNome, arquivoConteudo) {
+      function finishSave(arquivoNome, arquivoConteudo, arquivoEncoding) {
         var now = new Date().toISOString();
         var next = claudeSkills.slice();
         if (existing) {
@@ -2549,14 +2571,14 @@
             if (sk.id !== existing.id) return sk;
             return {
               id: sk.id, nome: nome, descricao: descricao,
-              arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo,
+              arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo, arquivoEncoding: arquivoEncoding || "texto",
               author: sk.author || getAuthorDefault() || "", createdAt: sk.createdAt, updatedAt: now
             };
           });
         } else {
           next.push({
             id: makeId(), nome: nome, descricao: descricao,
-            arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo,
+            arquivoNome: arquivoNome, arquivoConteudo: arquivoConteudo, arquivoEncoding: arquivoEncoding || "texto",
             author: getAuthorDefault() || "", createdAt: now, updatedAt: now
           });
         }
@@ -2572,16 +2594,36 @@
 
       if (file) {
         var reader = new FileReader();
-        reader.onload = function () { finishSave(file.name, String(reader.result || "")); };
+        reader.onload = function () {
+          var buffer = reader.result;
+          var bytes = new Uint8Array(buffer);
+          var hasNul = false;
+          for (var i = 0; i < bytes.length; i++) {
+            if (bytes[i] === 0) { hasNul = true; break; }
+          }
+          var decodedText = null;
+          if (!hasNul) {
+            try {
+              decodedText = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+            } catch (e) {
+              decodedText = null;
+            }
+          }
+          if (decodedText !== null) {
+            finishSave(file.name, decodedText, "texto");
+          } else {
+            finishSave(file.name, arrayBufferToBase64(buffer), "base64");
+          }
+        };
         reader.onerror = function () {
           saveBtn.disabled = false; cancelBtn.disabled = false;
           saveBtn.textContent = existing ? "Salvar alteracoes" : "Adicionar skill";
           errNote.textContent = "Nao foi possivel ler o arquivo selecionado.";
           errNote.hidden = false;
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
       } else {
-        finishSave(existing.arquivoNome, existing.arquivoConteudo);
+        finishSave(existing.arquivoNome, existing.arquivoConteudo, existing.arquivoEncoding || "texto");
       }
     });
   }
@@ -2772,23 +2814,30 @@
     body.appendChild(meta);
     body.appendChild(el("p", { "class": "detail-desc" }, sk.descricao || "Sem descricao."));
 
+    var isBinaryFile = sk.arquivoEncoding === "base64";
+
     var codeToolbar = el("div", { "class": "code-toolbar" });
     codeToolbar.appendChild(el("span", {}, sk.arquivoNome || "Conteudo do arquivo"));
     var toolbarActions = el("div", { style: "display:flex; gap:8px" });
-    var copyBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Copiar");
-    copyBtn.addEventListener("click", function () {
-      var text = sk.arquivoConteudo || "";
-      var done = function () { copyBtn.textContent = "Copiado!"; setTimeout(function () { copyBtn.textContent = "Copiar"; }, 1600); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
-      } else {
-        fallbackCopy(text, done);
-      }
-    });
+    if (!isBinaryFile) {
+      var copyBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Copiar");
+      copyBtn.addEventListener("click", function () {
+        var text = sk.arquivoConteudo || "";
+        var done = function () { copyBtn.textContent = "Copiado!"; setTimeout(function () { copyBtn.textContent = "Copiar"; }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+        } else {
+          fallbackCopy(text, done);
+        }
+      });
+      toolbarActions.appendChild(copyBtn);
+    }
     var downloadBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Baixar arquivo");
     downloadBtn.addEventListener("click", function () {
       try {
-        var blob = new Blob([sk.arquivoConteudo || ""], { type: "text/plain" });
+        var blob = isBinaryFile
+          ? base64ToBlob(sk.arquivoConteudo || "")
+          : new Blob([sk.arquivoConteudo || ""], { type: "text/plain" });
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
         a.href = url;
@@ -2801,14 +2850,15 @@
         showToast("Nao foi possivel baixar o arquivo.", "error");
       }
     });
-    toolbarActions.appendChild(copyBtn);
     toolbarActions.appendChild(downloadBtn);
     codeToolbar.appendChild(toolbarActions);
     body.appendChild(codeToolbar);
 
     var codeBlock = el("div", { "class": "code-block" });
     var codeEl = el("code");
-    codeEl.textContent = sk.arquivoConteudo || "";
+    codeEl.textContent = isBinaryFile
+      ? "Arquivo binario - pre-visualizacao nao disponivel. Use \"Baixar arquivo\" para obter o conteudo original."
+      : (sk.arquivoConteudo || "");
     codeBlock.appendChild(codeEl);
     body.appendChild(codeBlock);
 
