@@ -475,11 +475,29 @@
   .param-required { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; padding-bottom: 10px; white-space: nowrap; }
   .param-required input { width: auto; }
   .param-remove { align-self: end; margin-bottom: 1px; }
-  .param-list-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .param-list-fields { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
   .param-list-fields.is-disabled { opacity: 0.45; }
   .param-list-fields .form-row { margin-bottom: 0; }
   .param-add-btn { margin-top: 2px; }
   .param-empty-hint { font-size: 0.82rem; color: var(--text-faint); font-style: italic; margin: 0 0 10px; }
+
+  .param-modo-lista-wrap { max-width: 320px; margin-bottom: 12px; }
+  .param-dinamica-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .param-dinamica-fields[hidden] { display: none; }
+  .param-estatica-fields { display: flex; flex-direction: column; }
+  .param-estatica-fields[hidden] { display: none; }
+  .param-subsection-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 10px 0 8px; }
+  .param-subsection-title:first-child { margin-top: 0; }
+  .param-opt-table { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 8px; }
+  .param-opt-row { display: grid; grid-template-columns: 24px 68px 1fr 34px; align-items: center; gap: 8px; padding: 6px 10px; }
+  .param-opt-row + .param-opt-row { border-top: 1px solid var(--border); }
+  .param-opt-head { background: var(--surface); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  .param-opt-drag-cell { color: var(--text-faint); text-align: center; cursor: grab; }
+  .param-opt-padrao-cell { display: flex; justify-content: center; }
+  .param-opt-padrao-cell input { width: auto; }
+  .param-opt-valor-cell input { width: 100%; padding: 6px 8px; font-size: 0.85rem; }
+  .param-opt-remove-cell { display: flex; justify-content: center; }
+  .param-opt-add-btn { font-size: 0.82rem; padding: 6px 12px; }
 
   .detail-params { margin: 16px 0; }
   .detail-params-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 8px; }
@@ -794,8 +812,9 @@
     .form-two { grid-template-columns: 1fr; }
     .param-row-main { grid-template-columns: 1fr; }
     .param-remove { justify-self: start; }
-    .param-list-fields { grid-template-columns: 1fr; }
+    .param-dinamica-fields { grid-template-columns: 1fr; }
     .param-table-row { grid-template-columns: 1fr; }
+    .param-opt-row { grid-template-columns: 20px 56px 1fr 28px; }
     .topbar { padding: 14px 16px; }
     .app-shell { flex-direction: column; }
     .sidebar {
@@ -1885,7 +1904,7 @@
     }
 
     function buildParamRow(param) {
-      param = param || { nome: "", tipo: "", categoriaFonte: "", fonte: "", valor: "", obrigatorio: false };
+      param = param || { nome: "", tipo: "", categoriaFonte: "", fonte: "", valor: "", obrigatorio: false, opcoesLista: "", valorPadrao: "", visivel: true, opcoesEstaticas: [] };
 
       var row = el("div", { "class": "param-row" });
       var main = el("div", { "class": "param-row-main" });
@@ -1923,37 +1942,140 @@
 
       var listFields = el("div", { "class": "param-list-fields" });
 
+      var modoWrap = el("div", { "class": "form-row param-modo-lista-wrap" });
+      modoWrap.appendChild(el("label", {}, "Opções da lista"));
+      var modoSelect = el("select", { "class": "param-opcoes-lista" });
+      modoSelect.innerHTML = '<option value="dinamica">Dinâmica</option><option value="estatica">Estática</option>';
+      modoSelect.value = param.opcoesLista === "estatica" ? "estatica" : "dinamica";
+      modoWrap.appendChild(modoSelect);
+      listFields.appendChild(modoWrap);
+
+      // ---- Dinamica: campos existentes (Categoria da fonte, Fonte, Valor) ----
+      var dinamicaFields = el("div", { "class": "param-dinamica-fields" });
+
       var catWrap = el("div", { "class": "form-row" });
       catWrap.appendChild(el("label", {}, "Categoria da fonte"));
       var catInput = el("input", { type: "text", "class": "param-categoria-fonte", maxlength: "80" });
       catInput.value = param.categoriaFonte || "";
       catWrap.appendChild(catInput);
-      listFields.appendChild(catWrap);
+      dinamicaFields.appendChild(catWrap);
 
       var fonteWrap = el("div", { "class": "form-row" });
       fonteWrap.appendChild(el("label", {}, "Fonte"));
       var fonteInput = el("input", { type: "text", "class": "param-fonte", maxlength: "120" });
       fonteInput.value = param.fonte || "";
       fonteWrap.appendChild(fonteInput);
-      listFields.appendChild(fonteWrap);
+      dinamicaFields.appendChild(fonteWrap);
 
       var valorWrap = el("div", { "class": "form-row" });
       valorWrap.appendChild(el("label", {}, "Valor"));
       var valorInput = el("input", { type: "text", "class": "param-valor", maxlength: "200" });
       valorInput.value = param.valor || "";
       valorWrap.appendChild(valorInput);
-      listFields.appendChild(valorWrap);
+      dinamicaFields.appendChild(valorWrap);
+
+      listFields.appendChild(dinamicaFields);
+
+      // ---- Estatica: valor padrao + tabela de opcoes ----
+      var estaticaFields = el("div", { "class": "param-estatica-fields" });
+
+      estaticaFields.appendChild(el("div", { "class": "param-subsection-title" }, "Configuração do valor padrão"));
+      var padraoRow = el("div", { "class": "form-two" });
+
+      var valorPadraoWrap = el("div", { "class": "form-row" });
+      valorPadraoWrap.appendChild(el("label", {}, "Valor padrão"));
+      var valorPadraoInput = el("input", { type: "text", "class": "param-valor-padrao", maxlength: "200" });
+      valorPadraoInput.value = param.valorPadrao || "";
+      valorPadraoWrap.appendChild(valorPadraoInput);
+      padraoRow.appendChild(valorPadraoWrap);
+
+      var visivelWrap = el("div", { "class": "form-row" });
+      visivelWrap.appendChild(el("label", {}, "Visível"));
+      var visivelSelect = el("select", { "class": "param-visivel" });
+      visivelSelect.innerHTML = '<option value="sim">Sim</option><option value="nao">Não</option>';
+      visivelSelect.value = param.visivel === false ? "nao" : "sim";
+      visivelWrap.appendChild(visivelSelect);
+      padraoRow.appendChild(visivelWrap);
+
+      estaticaFields.appendChild(padraoRow);
+
+      estaticaFields.appendChild(el("div", { "class": "param-subsection-title" }, "Configuração das opções da lista estática"));
+      var optLabelWrap = el("div", { "class": "form-row" });
+      optLabelWrap.appendChild(el("label", {}, "Opções da lista"));
+      estaticaFields.appendChild(optLabelWrap);
+
+      var optTable = el("div", { "class": "param-opt-table" });
+      var optHead = el("div", { "class": "param-opt-row param-opt-head" });
+      optHead.appendChild(el("div", { "class": "param-opt-cell param-opt-drag-cell" }, ""));
+      optHead.appendChild(el("div", { "class": "param-opt-cell param-opt-padrao-cell" }, "Padrão"));
+      optHead.appendChild(el("div", { "class": "param-opt-cell param-opt-valor-cell" }, "Valor"));
+      optHead.appendChild(el("div", { "class": "param-opt-cell param-opt-remove-cell" }, ""));
+      optTable.appendChild(optHead);
+
+      var optBody = el("div", { "class": "param-opt-body" });
+      optTable.appendChild(optBody);
+      estaticaFields.appendChild(optTable);
+
+      var addOptBtn = el("button", { "class": "btn btn-secondary param-opt-add-btn", type: "button" }, "+ Adicionar opção");
+      estaticaFields.appendChild(addOptBtn);
+
+      function buildOptRow(opt) {
+        opt = opt || { padrao: false, valor: "" };
+        var orow = el("div", { "class": "param-opt-row param-opt-item" });
+        orow.appendChild(el("div", { "class": "param-opt-cell param-opt-drag-cell" }, "⋮⋮"));
+
+        var padraoCell = el("div", { "class": "param-opt-cell param-opt-padrao-cell" });
+        var padraoCk = el("input", { type: "checkbox", "class": "param-opt-padrao" });
+        padraoCk.checked = !!opt.padrao;
+        padraoCell.appendChild(padraoCk);
+        orow.appendChild(padraoCell);
+
+        var valorCell = el("div", { "class": "param-opt-cell param-opt-valor-cell" });
+        var optValorInput = el("input", { type: "text", "class": "param-opt-valor", maxlength: "200" });
+        optValorInput.value = opt.valor || "";
+        valorCell.appendChild(optValorInput);
+        orow.appendChild(valorCell);
+
+        var removeCell = el("div", { "class": "param-opt-cell param-opt-remove-cell" });
+        var optRemoveBtn = el("button", { "class": "icon-btn param-opt-remove", type: "button", "aria-label": "Remover opção" }, "✕");
+        optRemoveBtn.addEventListener("click", function () { orow.remove(); });
+        removeCell.appendChild(optRemoveBtn);
+        orow.appendChild(removeCell);
+
+        return orow;
+      }
+
+      var initialOpts = (param.opcoesEstaticas && param.opcoesEstaticas.length) ? param.opcoesEstaticas : [{ padrao: false, valor: "" }];
+      initialOpts.forEach(function (o) { optBody.appendChild(buildOptRow(o)); });
+
+      addOptBtn.addEventListener("click", function () {
+        optBody.appendChild(buildOptRow(null));
+      });
+
+      listFields.appendChild(estaticaFields);
 
       row.appendChild(listFields);
 
       function syncListFields() {
         var isList = !!LISTA_TIPOS[tipoSelect.value];
         listFields.classList.toggle("is-disabled", !isList);
-        catInput.disabled = !isList;
-        fonteInput.disabled = !isList;
-        valorInput.disabled = !isList;
+        modoSelect.disabled = !isList;
+
+        var isEstatica = isList && modoSelect.value === "estatica";
+        var isDinamica = isList && !isEstatica;
+
+        dinamicaFields.hidden = !isDinamica;
+        catInput.disabled = !isDinamica;
+        fonteInput.disabled = !isDinamica;
+        valorInput.disabled = !isDinamica;
+
+        estaticaFields.hidden = !isEstatica;
+        valorPadraoInput.disabled = !isEstatica;
+        visivelSelect.disabled = !isEstatica;
+        qsa(".param-opt-valor, .param-opt-padrao", estaticaFields).forEach(function (el2) { el2.disabled = !isEstatica; });
       }
       tipoSelect.addEventListener("change", syncListFields);
+      modoSelect.addEventListener("change", syncListFields);
       syncListFields();
 
       return row;
@@ -1999,13 +2121,26 @@
       var parametros = qsa(".param-row", paramList).map(function (row) {
         var tipo = qs(".param-tipo", row).value;
         var isList = !!LISTA_TIPOS[tipo];
+        var modo = isList ? qs(".param-opcoes-lista", row).value : "";
+        var isEstatica = isList && modo === "estatica";
+        var isDinamica = isList && !isEstatica;
+        var opcoesEstaticas = isEstatica ? qsa(".param-opt-item", row).map(function (orow) {
+          return {
+            padrao: qs(".param-opt-padrao", orow).checked,
+            valor: qs(".param-opt-valor", orow).value.trim()
+          };
+        }).filter(function (o) { return o.valor; }) : [];
         return {
           nome: qs(".param-nome", row).value.trim(),
           tipo: tipo,
-          categoriaFonte: isList ? qs(".param-categoria-fonte", row).value.trim() : "",
-          fonte: isList ? qs(".param-fonte", row).value.trim() : "",
-          valor: isList ? qs(".param-valor", row).value.trim() : "",
-          obrigatorio: qs(".param-obrigatorio", row).checked
+          categoriaFonte: isDinamica ? qs(".param-categoria-fonte", row).value.trim() : "",
+          fonte: isDinamica ? qs(".param-fonte", row).value.trim() : "",
+          valor: isDinamica ? qs(".param-valor", row).value.trim() : "",
+          obrigatorio: qs(".param-obrigatorio", row).checked,
+          opcoesLista: isList ? modo : "",
+          valorPadrao: isEstatica ? qs(".param-valor-padrao", row).value.trim() : "",
+          visivel: isEstatica ? (qs(".param-visivel", row).value !== "nao") : true,
+          opcoesEstaticas: opcoesEstaticas
         };
       }).filter(function (p) { return p.nome || p.tipo; });
 
@@ -2125,11 +2260,21 @@
         tr.appendChild(el("div", { "class": "param-table-cell" }, tipoDadoLabel(p.tipo)));
         var opts = "-";
         if (LISTA_TIPOS[p.tipo]) {
-          var parts = [];
-          if (p.categoriaFonte) parts.push("Categoria: " + p.categoriaFonte);
-          if (p.fonte) parts.push("Fonte: " + p.fonte);
-          if (p.valor) parts.push("Valor: " + p.valor);
-          opts = parts.length ? parts.join(" | ") : "-";
+          if (p.opcoesLista === "estatica") {
+            var vals = (p.opcoesEstaticas || []).map(function (o) {
+              return o.valor + (o.padrao ? " (padrão)" : "");
+            });
+            var estParts = ["Estática: " + (vals.length ? vals.join(", ") : "-")];
+            if (p.valorPadrao) estParts.push("Padrão: " + p.valorPadrao);
+            if (p.visivel === false) estParts.push("Oculto");
+            opts = estParts.join(" | ");
+          } else {
+            var parts = [];
+            if (p.categoriaFonte) parts.push("Categoria: " + p.categoriaFonte);
+            if (p.fonte) parts.push("Fonte: " + p.fonte);
+            if (p.valor) parts.push("Valor: " + p.valor);
+            opts = "Dinâmica: " + (parts.length ? parts.join(" | ") : "-");
+          }
         }
         tr.appendChild(el("div", { "class": "param-table-cell" }, opts));
         tr.appendChild(el("div", { "class": "param-table-cell" }, p.obrigatorio ? "Sim" : "Nao"));
