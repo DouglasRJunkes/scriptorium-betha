@@ -800,7 +800,11 @@
   .sm-option-title { font-weight: 600; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; color: var(--text); }
   .sm-option-btn.active .sm-option-title { color: var(--accent-strong); }
   .sm-option-hint { font-size: 0.76rem; color: var(--text-faint); }
-  .sm-actions { display: flex; justify-content: flex-end; }
+  .sm-actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .sm-ai-hint { font-size: 0.76rem; color: var(--text-faint); text-align: right; margin: -6px 0 0; }
+  .sm-ai-hint[hidden] { display: none; }
+  #smGenerateAiBtn[hidden] { display: none; }
+  #smGenerateAiBtn:disabled { opacity: 0.6; cursor: default; }
   .sm-vars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
   .sm-var-field { display: flex; flex-direction: column; gap: 6px; }
   .sm-var-field label { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -1183,7 +1187,9 @@
             '</div>' +
             '<div class="sm-actions">' +
               '<button class="btn btn-primary" type="button" id="smGenerateBtn">Gerar</button>' +
+              '<button class="btn btn-secondary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
             '</div>' +
+            '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta consultas fora dos formatos reconhecidos pelo gerador padrao. Sempre revise o script antes de usar.</p>' +
             '<div class="tool-field-card">' +
               '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
               '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar.</code></div>' +
@@ -1866,6 +1872,7 @@
   function updateAuthUI() {
     var btn = qs("#logoutBtn");
     if (btn) btn.hidden = !authSession;
+    updateSmAiButtonVisibility();
   }
   function handleAuthExpired() {
     authSession = null;
@@ -4458,6 +4465,87 @@
     });
   }
 
+  function updateSmAiButtonVisibility() {
+    var btn = qs("#smGenerateAiBtn");
+    var hint = qs("#smAiHint");
+    var available = supabaseConfigured() && !!authSession;
+    if (btn) btn.hidden = !available;
+    if (hint) hint.hidden = !available;
+  }
+  function collectSmAiPayload() {
+    var query = ((qs("#smQueryInput") || {}).value || "").trim();
+    var payload = { mode: smSelectedOption, query: query };
+    if (smSelectedOption === "extrair_arquivo") {
+      payload.fileType = smFileType;
+      payload.vars = [1, 2, 3, 4, 5].map(function (i) {
+        var field = qs("#smVar" + i);
+        return field ? field.value : "";
+      });
+    } else if (smSelectedOption === "usar_api") {
+      payload.apiMode = smApiMode;
+      payload.apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
+      payload.apiMethod = (qs("#smApiMethod") || {}).value || "POST";
+      payload.apiParams = ((qs("#smApiParams") || {}).value || "").trim();
+      if (smApiMode === "lote") {
+        payload.apiListVar = ((qs("#smApiListVar") || {}).value || "").trim();
+      } else {
+        payload.vars = [1, 2, 3, 4, 5].map(function (i) {
+          var field = qs("#smVar" + i);
+          return field ? field.value : "";
+        });
+      }
+    }
+    return payload;
+  }
+  function smGenerateWithAi(payload) {
+    return fetch(SUPABASE_URL + "/functions/v1/gerar-script-ia", {
+      method: "POST",
+      headers: supabaseHeaders(),
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (res.status === 401) handleAuthExpired();
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) {
+          throw new Error((data && data.error) || ("http_" + res.status));
+        }
+        return data;
+      });
+    });
+  }
+  function wireSmGenerateAi() {
+    var btn = qs("#smGenerateAiBtn");
+    var input = qs("#smQueryInput");
+    var output = qs("#smOutput");
+    if (!btn || !input || !output) return;
+    btn.addEventListener("click", function () {
+      var query = input.value.trim();
+      if (!query) {
+        showToast("Cole a consulta antes de gerar.", "error");
+        return;
+      }
+      if (smSelectedOption === "usar_api") {
+        var apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
+        if (!apiUrl) {
+          showToast("Informe a URL da API.", "error");
+          return;
+        }
+      }
+      var payload = collectSmAiPayload();
+      var originalLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Gerando...";
+      smGenerateWithAi(payload).then(function (data) {
+        output.textContent = data.script || "";
+        showToast("Script gerado com IA. Revise antes de usar.", "info");
+      }).catch(function (err) {
+        showToast("Nao foi possivel gerar o script com IA. Tente novamente.", "error");
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      });
+    });
+  }
+
   function wireSmCopy() {
     var btn = qs("#smCopyBtn");
     if (!btn) return;
@@ -4482,7 +4570,9 @@
     wireSmFileType();
     wireSmApiMode();
     wireSmGenerate();
+    wireSmGenerateAi();
     wireSmCopy();
+    updateSmAiButtonVisibility();
   }
 
   function buildDocument(nextScripts, nextSkills) {
