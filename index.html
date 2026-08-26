@@ -761,6 +761,10 @@
   }
 
   .tool-page { display: flex; flex-direction: column; gap: 20px; max-width: 960px; }
+  /* Script Maker lida com scripts/codigo longos - usa a largura total da
+     area de conteudo em vez do teto de 960px usado pelas outras ferramentas
+     (Base64 etc.), reduzindo a necessidade de rolagem horizontal. */
+  #page-apimaker .tool-page { max-width: none; }
   .b64-mode-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .b64-mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 3px; }
   .b64-mode-btn {
