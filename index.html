@@ -813,6 +813,7 @@
   .sm-filetype-row .b64-mode-btn:disabled { cursor: not-allowed; }
   .tool-field-card.is-disabled { opacity: 0.45; transition: opacity 0.12s ease; }
   #smApiCard[hidden] { display: none; }
+  #smErrorCard[hidden] { display: none; }
   .tool-field-card.is-disabled input, .tool-field-card.is-disabled textarea { cursor: not-allowed; }
 
   .help-tip { position: relative; display: inline-flex; vertical-align: middle; margin-left: 2px; }
@@ -1126,7 +1127,7 @@
               '<p>Cole a consulta base em BFC-Script, escolha o tipo de geracao desejado e clique em Gerar com IA.</p>' +
             '</div>' +
             '<div class="tool-field-card">' +
-              '<h4>Consulta (BFC-Script) <span class="help-tip">' +
+              '<h4><span id="smQueryLabel">Consulta (BFC-Script)</span> <span class="help-tip">' +
                 '<button type="button" class="help-icon" aria-describedby="smQueryHelp">?</button>' +
                 '<span class="help-tip-box" id="smQueryHelp" role="tooltip">Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script.</span>' +
               '</span></h4>' +
@@ -1169,6 +1170,11 @@
                 '<label for="smApiParams">Parametros (JSON)</label>' +
                 '<textarea class="b64-textarea" id="smApiParams" placeholder="Cole aqui um JSON de exemplo do payload esperado pela API, ex:&#10;[&#10;  {&#10;    &quot;idIntegracao&quot;: &quot;INTEGRACAO1&quot;,&#10;    &quot;imoveis&quot;: {&#10;      &quot;idGerado&quot;: { &quot;id&quot;: 1 },&#10;      &quot;idBairro&quot;: 1,&#10;      &quot;bloco&quot;: &quot;A&quot;&#10;    }&#10;  }&#10;]" spellcheck="false"></textarea>' +
               '</div>' +
+            '</div>' +
+            '<div class="tool-field-card" id="smErrorCard" hidden>' +
+              '<h4>Erro apresentado</h4>' +
+              '<p class="sm-option-hint">Cole a mensagem de erro retornada ao executar o script acima.</p>' +
+              '<textarea class="b64-textarea" id="smErrorInput" placeholder="Cole aqui o erro apresentado, por exemplo:&#10;groovy.lang.MissingPropertyException: No such property: idContribuinte for class: Script1" spellcheck="false"></textarea>' +
             '</div>' +
             '<div class="sm-actions">' +
               '<button class="btn btn-primary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
@@ -3919,8 +3925,23 @@
 
   var SM_OPTIONS = [
     { key: "extrair_arquivo", label: "Extrair Resultado em arquivo", hint: "Gera um script que extrai o resultado da consulta para um arquivo TXT ou CSV." },
-    { key: "usar_api", label: "Utilizar API", hint: "Gera um script que envia os dados da consulta para uma API via POST." }
+    { key: "usar_api", label: "Utilizar API", hint: "Gera um script que envia os dados da consulta para uma API via POST." },
+    { key: "corrigir_script", label: "Corrigir Script", hint: "Cole o script com erro acima e informe a mensagem de erro para gerar uma versao corrigida." }
   ];
+  var SM_QUERY_LABELS = {
+    extrair_arquivo: {
+      label: "Consulta (BFC-Script)",
+      help: "Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script."
+    },
+    usar_api: {
+      label: "Consulta (BFC-Script)",
+      help: "Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script."
+    },
+    corrigir_script: {
+      label: "Script com erro (BFC-Script)",
+      help: "Cole o script completo que apresentou o erro - a IA usa o script e a mensagem de erro abaixo para gerar a versao corrigida."
+    }
+  };
   var smSelectedOption = SM_OPTIONS[0].key;
   var smFileType = "txt";
 
@@ -3964,6 +3985,18 @@
         btn.disabled = !apiEnabled;
       });
     }
+    var errorCard = qs("#smErrorCard");
+    if (errorCard) {
+      var fixEnabled = smSelectedOption === "corrigir_script";
+      errorCard.hidden = !fixEnabled;
+      var errorInput = qs("#smErrorInput");
+      if (errorInput) errorInput.disabled = !fixEnabled;
+    }
+    var labelInfo = SM_QUERY_LABELS[smSelectedOption] || SM_QUERY_LABELS.extrair_arquivo;
+    var queryLabel = qs("#smQueryLabel");
+    var queryHelp = qs("#smQueryHelp");
+    if (queryLabel) queryLabel.textContent = labelInfo.label;
+    if (queryHelp) queryHelp.textContent = labelInfo.help;
   }
 
   var smApiMode = "single";
@@ -4007,6 +4040,8 @@
       payload.apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
       payload.apiMethod = (qs("#smApiMethod") || {}).value || "POST";
       payload.apiParams = ((qs("#smApiParams") || {}).value || "").trim();
+    } else if (smSelectedOption === "corrigir_script") {
+      payload.errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
     }
     return payload;
   }
@@ -4033,13 +4068,20 @@
     btn.addEventListener("click", function () {
       var query = input.value.trim();
       if (!query) {
-        showToast("Cole a consulta antes de gerar.", "error");
+        showToast(smSelectedOption === "corrigir_script" ? "Cole o script com erro antes de gerar." : "Cole a consulta antes de gerar.", "error");
         return;
       }
       if (smSelectedOption === "usar_api") {
         var apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
         if (!apiUrl) {
           showToast("Informe a URL da API.", "error");
+          return;
+        }
+      }
+      if (smSelectedOption === "corrigir_script") {
+        var errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
+        if (!errorMessage) {
+          showToast("Cole a mensagem de erro antes de gerar.", "error");
           return;
         }
       }
