@@ -4230,7 +4230,9 @@
         output.textContent = data.script || "";
         showToast("Script gerado com IA. Revise antes de usar.", "info");
       }).catch(function (err) {
-        showToast("Nao foi possivel gerar o script com IA. Tente novamente.", "error");
+        var msg = (err && err.message) || "";
+        var friendly = (msg && !/^http_\d+$/.test(msg)) ? msg : "Nao foi possivel gerar o script com IA. Tente novamente.";
+        showToast(friendly, "error");
       }).then(function () {
         btn.disabled = false;
         btn.textContent = originalLabel;
