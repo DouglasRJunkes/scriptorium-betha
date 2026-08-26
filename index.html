@@ -592,6 +592,42 @@
   }
   .detail-footer-meta { font-size: 0.78rem; color: var(--text-faint); margin-top: 14px; }
 
+  .sm-result-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; }
+  .sm-result-col { flex: 1 1 320px; min-width: 280px; }
+  .sm-explanation-text {
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text);
+    margin: 0;
+  }
+  #smExplanationCard[hidden] { display: none; }
+
+  .sm-progress {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .sm-progress-bar {
+    position: absolute;
+    top: 0;
+    left: -35%;
+    height: 100%;
+    width: 35%;
+    border-radius: 999px;
+    background: var(--accent);
+    animation: sm-progress-slide 1.1s ease-in-out infinite;
+  }
+  @keyframes sm-progress-slide {
+    0% { left: -35%; }
+    100% { left: 100%; }
+  }
+  .sm-progress-label { margin: 0; font-size: 0.78rem; color: var(--text-faint); }
+
   .confirm-box {
     background: var(--danger-soft);
     border: 1px solid var(--danger);
@@ -1207,10 +1243,18 @@
             '<div class="sm-actions">' +
               '<button class="btn btn-primary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
             '</div>' +
+            '<div class="sm-progress" id="smProgress" hidden><div class="sm-progress-bar"></div></div>' +
+            '<p class="sm-progress-label" id="smProgressLabel" hidden>Gerando com IA... pode levar ate 1 minuto em scripts maiores.</p>' +
             '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta a consulta colada e monta o script completo. Sempre revise o script antes de usar.</p>' +
-            '<div class="tool-field-card">' +
-              '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
-              '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar com IA.</code></div>' +
+            '<div class="sm-result-row">' +
+              '<div class="tool-field-card sm-result-col">' +
+                '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
+                '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar com IA.</code></div>' +
+              '</div>' +
+              '<div class="tool-field-card sm-result-col" id="smExplanationCard" hidden>' +
+                '<div class="code-toolbar"><span>Diagnostico e correcoes</span></div>' +
+                '<div class="code-block"><p class="sm-explanation-text" id="smExplanationOutput">Apos gerar com IA, a causa do erro e as correcoes aplicadas aparecerao aqui.</p></div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</section>' +
@@ -4032,6 +4076,10 @@
     if (importsCard && smSelectedOption !== "corrigir_script") {
       importsCard.hidden = true;
     }
+    var explanationCard = qs("#smExplanationCard");
+    if (explanationCard) {
+      explanationCard.hidden = smSelectedOption !== "corrigir_script";
+    }
     var labelInfo = SM_QUERY_LABELS[smSelectedOption] || SM_QUERY_LABELS.extrair_arquivo;
     var queryLabel = qs("#smQueryLabel");
     var queryHelp = qs("#smQueryHelp");
@@ -4224,10 +4272,20 @@
       }
       var payload = collectSmAiPayload();
       var originalLabel = btn.textContent;
+      var progressEl = qs("#smProgress");
+      var progressLabelEl = qs("#smProgressLabel");
       btn.disabled = true;
       btn.textContent = "Gerando...";
+      if (progressEl) progressEl.hidden = false;
+      if (progressLabelEl) progressLabelEl.hidden = false;
       smGenerateWithAi(payload).then(function (data) {
         output.textContent = data.script || "";
+        var explanationEl = qs("#smExplanationOutput");
+        if (explanationEl) {
+          explanationEl.textContent = (data.explanation && data.explanation.trim())
+            ? data.explanation.trim()
+            : "A IA nao retornou uma explicacao para esta geracao.";
+        }
         showToast("Script gerado com IA. Revise antes de usar.", "info");
       }).catch(function (err) {
         var msg = (err && err.message) || "";
@@ -4236,6 +4294,8 @@
       }).then(function () {
         btn.disabled = false;
         btn.textContent = originalLabel;
+        if (progressEl) progressEl.hidden = true;
+        if (progressLabelEl) progressLabelEl.hidden = true;
       });
     });
   }
