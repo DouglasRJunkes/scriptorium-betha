@@ -814,6 +814,25 @@
   .tool-field-card.is-disabled { opacity: 0.45; transition: opacity 0.12s ease; }
   #smApiCard[hidden] { display: none; }
   #smErrorCard[hidden] { display: none; }
+  #smContextCard[hidden] { display: none; }
+  #smImportsCard[hidden] { display: none; }
+  .sm-imports-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .sm-import-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .sm-import-btn:hover { border-color: var(--border-strong); }
+  .sm-import-btn.is-filled { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
   .tool-field-card.is-disabled input, .tool-field-card.is-disabled textarea { cursor: not-allowed; }
 
   .help-tip { position: relative; display: inline-flex; vertical-align: middle; margin-left: 2px; }
@@ -1175,6 +1194,15 @@
               '<h4>Erro apresentado</h4>' +
               '<p class="sm-option-hint">Cole a mensagem de erro retornada ao executar o script acima.</p>' +
               '<textarea class="b64-textarea" id="smErrorInput" placeholder="Cole aqui o erro apresentado, por exemplo:&#10;groovy.lang.MissingPropertyException: No such property: idContribuinte for class: Script1" spellcheck="false"></textarea>' +
+            '</div>' +
+            '<div class="tool-field-card" id="smContextCard" hidden>' +
+              '<h4>Consideracoes</h4>' +
+              '<p class="sm-option-hint">Contexto adicional opcional para a correcao: regras de negocio, dependencias entre scripts, ou qualquer informacao relevante.</p>' +
+              '<textarea class="b64-textarea" id="smContextInput" placeholder="Ex: este script roda mensalmente via agendamento e depende do script utilitario_cnd." spellcheck="false"></textarea>' +
+            '</div>' +
+            '<div class="tool-field-card" id="smImportsCard" hidden>' +
+              '<div class="banner" id="smImportsMessage"></div>' +
+              '<div class="sm-imports-list" id="smImportsList"></div>' +
             '</div>' +
             '<div class="sm-actions">' +
               '<button class="btn btn-primary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
@@ -3944,6 +3972,7 @@
   };
   var smSelectedOption = SM_OPTIONS[0].key;
   var smFileType = "txt";
+  var smImportedScripts = {};
 
   function renderSmOptions() {
     var wrap = qs("#smOptions");
@@ -3992,6 +4021,17 @@
       var errorInput = qs("#smErrorInput");
       if (errorInput) errorInput.disabled = !fixEnabled;
     }
+    var contextCard = qs("#smContextCard");
+    if (contextCard) {
+      var contextEnabled = smSelectedOption === "corrigir_script";
+      contextCard.hidden = !contextEnabled;
+      var contextInput = qs("#smContextInput");
+      if (contextInput) contextInput.disabled = !contextEnabled;
+    }
+    var importsCard = qs("#smImportsCard");
+    if (importsCard && smSelectedOption !== "corrigir_script") {
+      importsCard.hidden = true;
+    }
     var labelInfo = SM_QUERY_LABELS[smSelectedOption] || SM_QUERY_LABELS.extrair_arquivo;
     var queryLabel = qs("#smQueryLabel");
     var queryHelp = qs("#smQueryHelp");
@@ -4030,6 +4070,87 @@
     if (btn) btn.hidden = !available;
     if (hint) hint.hidden = !available;
   }
+  // Localiza usos de `importar "nomeDoScript"` no script colado (sintaxe da
+  // DSL BFC-Script para incluir outro script guardado no sistema). Retorna
+  // os nomes unicos, na ordem em que aparecem.
+  function smFindImportedScriptNames(scriptText) {
+    var names = [];
+    var re = /\bimportar\s*["']([^"']+)["']/g;
+    var m;
+    while ((m = re.exec(String(scriptText || "")))) {
+      var name = m[1].trim();
+      if (name && names.indexOf(name) === -1) names.push(name);
+    }
+    return names;
+  }
+
+  function renderSmImportsCard(names) {
+    var card = qs("#smImportsCard");
+    var msgEl = qs("#smImportsMessage");
+    var listEl = qs("#smImportsList");
+    if (!card || !msgEl || !listEl) return;
+    if (!names || !names.length) {
+      card.hidden = true;
+      msgEl.textContent = "";
+      listEl.innerHTML = "";
+      return;
+    }
+    card.hidden = false;
+    msgEl.textContent = "O script colado utiliza a funcao \"importar\" com os seguintes scripts: " +
+      names.join(", ") + ". Cole o conteudo desses scripts abaixo.";
+    listEl.innerHTML = "";
+    names.forEach(function (name) {
+      var filled = !!(smImportedScripts[name] && smImportedScripts[name].trim());
+      var btn = el("button", { type: "button", "class": "sm-import-btn" + (filled ? " is-filled" : "") }, (filled ? "✓ " : "") + name);
+      btn.addEventListener("click", function () { openImportScriptModal(name); });
+      listEl.appendChild(btn);
+    });
+  }
+
+  function openImportScriptModal(name) {
+    lastFocused = document.activeElement;
+    var layer = qs("#modalLayer");
+    if (!layer) return;
+    layer.innerHTML = "";
+
+    var overlay = el("div", { "class": "modal-overlay", role: "presentation" });
+    overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+    overlay.addEventListener("keydown", onOverlayKeydown);
+
+    var panel = el("div", { "class": "modal-panel wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "importModalTitle" });
+
+    var header = el("div", { "class": "modal-header" });
+    header.appendChild(el("h2", { id: "importModalTitle" }, 'Colar script "' + name + '"'));
+    var closeBtn = el("button", { "class": "icon-btn", type: "button", "aria-label": "Fechar" }, "✕");
+    closeBtn.addEventListener("click", closeModal);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    var body = el("div", { "class": "modal-body" });
+    body.appendChild(el("p", { "class": "sm-option-hint" }, 'Cole aqui o conteudo completo do script "' + name + '", usado pelo script principal atraves de importar "' + name + '".'));
+    var textarea = el("textarea", { "class": "b64-textarea", id: "importScriptTextarea", rows: "14" });
+    textarea.value = smImportedScripts[name] || "";
+    body.appendChild(textarea);
+    panel.appendChild(body);
+
+    var footer = el("div", { "class": "modal-footer" });
+    var cancelBtn = el("button", { "class": "btn btn-secondary", type: "button" }, "Cancelar");
+    cancelBtn.addEventListener("click", closeModal);
+    var saveBtn = el("button", { "class": "btn btn-primary", type: "button" }, "Salvar");
+    saveBtn.addEventListener("click", function () {
+      smImportedScripts[name] = textarea.value.trim();
+      closeModal();
+      renderSmImportsCard(smFindImportedScriptNames(((qs("#smQueryInput") || {}).value || "")));
+    });
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    layer.appendChild(overlay);
+    textarea.focus();
+  }
+
   function collectSmAiPayload() {
     var query = ((qs("#smQueryInput") || {}).value || "").trim();
     var payload = { mode: smSelectedOption, query: query };
@@ -4042,6 +4163,13 @@
       payload.apiParams = ((qs("#smApiParams") || {}).value || "").trim();
     } else if (smSelectedOption === "corrigir_script") {
       payload.errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
+      payload.context = ((qs("#smContextInput") || {}).value || "").trim();
+      var importNames = smFindImportedScriptNames(query);
+      if (importNames.length) {
+        payload.importedScripts = importNames.map(function (name) {
+          return { name: name, content: smImportedScripts[name] || "" };
+        });
+      }
     }
     return payload;
   }
@@ -4082,6 +4210,15 @@
         var errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
         if (!errorMessage) {
           showToast("Cole a mensagem de erro antes de gerar.", "error");
+          return;
+        }
+        var importNames = smFindImportedScriptNames(query);
+        renderSmImportsCard(importNames);
+        var missingImports = importNames.filter(function (name) {
+          return !(smImportedScripts[name] && smImportedScripts[name].trim());
+        });
+        if (missingImports.length) {
+          showToast("Cole o conteudo dos scripts importados antes de gerar.", "error");
           return;
         }
       }
