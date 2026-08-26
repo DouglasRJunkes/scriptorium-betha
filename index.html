@@ -812,6 +812,7 @@
   .sm-filetype-row.is-disabled { opacity: 0.45; }
   .sm-filetype-row .b64-mode-btn:disabled { cursor: not-allowed; }
   .tool-field-card.is-disabled { opacity: 0.45; transition: opacity 0.12s ease; }
+  #smApiCard[hidden] { display: none; }
   .tool-field-card.is-disabled input, .tool-field-card.is-disabled textarea { cursor: not-allowed; }
 
   .help-tip { position: relative; display: inline-flex; vertical-align: middle; margin-left: 2px; }
@@ -1142,7 +1143,7 @@
                 '</div>' +
               '</div>' +
             '</div>' +
-            '<div class="tool-field-card" id="smApiCard">' +
+            '<div class="tool-field-card" id="smApiCard" hidden>' +
               '<h4>Configuracao da API</h4>' +
               '<div class="sm-var-field">' +
                 '<label>Modo de integracao</label>' +
@@ -3952,7 +3953,7 @@
     var apiCard = qs("#smApiCard");
     if (apiCard) {
       var apiEnabled = smSelectedOption === "usar_api";
-      apiCard.classList.toggle("is-disabled", !apiEnabled);
+      apiCard.hidden = !apiEnabled;
       var urlInput = qs("#smApiUrl");
       var methodInput = qs("#smApiMethod");
       var paramsInput = qs("#smApiParams");
