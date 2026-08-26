@@ -250,7 +250,7 @@
     color: var(--text-faint);
     pointer-events: none;
   }
-  input[type="search"], input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  input[type="search"], input[type="text"], input[type="number"], input[type="date"], input[type="password"], select, textarea {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -433,6 +433,46 @@
     overflow: hidden;
   }
   .modal-panel.wide { max-width: 760px; }
+  .auth-gate {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 500;
+  }
+  .auth-gate[hidden] { display: none; }
+  .auth-gate-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 28px;
+    text-align: center;
+  }
+  .auth-gate-logo {
+    width: 44px; height: 44px;
+    margin: 0 auto 14px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .auth-gate-logo img { width: 100%; height: 100%; border-radius: 10px; }
+  .auth-gate-card h1 { font-size: 1.05rem; margin: 0 0 4px; }
+  .auth-gate-card p.auth-gate-sub { color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px; }
+  .auth-gate-form { display: flex; flex-direction: column; gap: 12px; }
+  .auth-gate-form .btn { width: 100%; }
+  .auth-gate-error {
+    color: var(--danger-strong);
+    font-size: 0.82rem;
+    margin: 0;
+    min-height: 1em;
+    text-align: left;
+  }
+  .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .modal-header {
     display: flex;
     align-items: flex-start;
@@ -842,7 +882,22 @@
 
 <div id="root"></div>
 
-<script id="init-data" type="application/json">{"scripts": [{"id": "s_recovered_lotescontabeis", "title": "Exclusão de lotes Contabeis", "system": "Tributos", "description": "Realiza a exclusão de todos os lotes contábeis disponíveis na entidade, sem distinção.\nNecessario executar somente 1 vez.", "script": "//Fonte de dados\nfonteIntegracoesContabeis = Dados.tributos.v2.integracoesContabeis\n\n//Filtro: só ARRECADACOES em HOMOLOGACAO\nfiltroIntegracoesContabeis = \"tipoIntegracao = 'ARRECADACOES' and situacao = 'EM_HOMOLOGACAO'\"\n\n// Monta lista com os itens que vamos excluir\npayload = []\n\ndadosIntegracoesContabeis = fonteIntegracoesContabeis.busca(criterio: filtroIntegracoesContabeis)\n\npercorrer (dadosIntegracoesContabeis) { itemIntegracoesContabeis ->\n  payload << [\n    \"idIntegracao\": \"INTEGRACAO \" + itemIntegracoesContabeis.id,\n    \"integracoesContabeis\": [\n      \"idGerado\": [\n        \"id\": itemIntegracoesContabeis.id\n      ]\n    ]\n  ]\n}\n\n// Quebra em lotes de no máximo 50 itens (exigência do endpoint)\npayload = payload.collate(50)\n\n// Se tiver algo pra excluir\nif (payload) {\n  payload.each { lote ->\n    servico = Http.servico(\"https://tributos.betha.cloud/service-layer-tributos/api/integracoesContabeis\")\n    .cabecalho(\"Content-Type\", \"application/json\")\n    .chaveIntegracao(Variavel.CHAVE_INTEGRACAO)\n    .DELETE(lote, Http.JSON)\n    \n    imprimir 'JSON: ' + servico.codigo() + ' - ' + servico.conteudo()\n  }\n} else {\n  imprimir \"Nenhuma integração encontrada para exclusão.\"\n}", "author": "Douglas Junkes", "createdAt": "2026-08-24T14:00:04.000Z", "updatedAt": "2026-08-24T14:00:04.000Z"}]}</script>
+<div id="authGate" class="auth-gate" hidden>
+  <div class="auth-gate-card">
+    <div class="auth-gate-logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+    </div>
+    <h1>Scriptorium Betha</h1>
+    <p class="auth-gate-sub">Acesso restrito a equipe. Informe a senha para continuar.</p>
+    <form id="authGateForm" class="auth-gate-form">
+      <input type="password" id="authGatePassword" placeholder="Senha de acesso" autocomplete="current-password" required />
+      <button class="btn btn-primary" type="submit" id="authGateSubmit">Entrar</button>
+      <p class="auth-gate-error" id="authGateError" hidden></p>
+    </form>
+  </div>
+</div>
+
+<script id="init-data" type="application/json">{"scripts": [], "claudeSkills": []}</script>
 
 <script id="app-js" type="text/plain">
 (function () {
@@ -959,6 +1014,9 @@
         '<div class="brand">' +
           '<span class="brand-mark" aria-hidden="true"><img src="' + SIMBOLO_DATA_URI + '" alt="" /></span>' +
           '<div><h1>Scriptorium Betha</h1><p class="tagline">repositorio de scripts da equipe</p></div>' +
+        '</div>' +
+        '<div class="topbar-actions">' +
+          '<button class="btn btn-secondary" id="logoutBtn" type="button" hidden>Sair</button>' +
         '</div>' +
       '</div>' +
     '</header>' +
@@ -1633,14 +1691,16 @@
   // a capability nativa do Artifact (capability.publish) e este bloco fica inativo.
   var SUPABASE_URL = "https://tnbpmgmgeaafovmctepm.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_ACdm9Bsf2XMhx6dQYXaFmg_hHDlsYaT";
+  var AUTH_TEAM_EMAIL = "equipe@scriptoriumbetha.local";
 
   function supabaseConfigured() {
     return !!(SUPABASE_URL && SUPABASE_ANON_KEY);
   }
   function supabaseHeaders(extra) {
+    var token = (authSession && authSession.accessToken) || SUPABASE_ANON_KEY;
     var h = {
       "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + token,
       "Content-Type": "application/json"
     };
     if (extra) {
@@ -1650,6 +1710,196 @@
     }
     return h;
   }
+
+  // ---- Autenticacao (Supabase Auth) -----------------------------------
+  // Protege o acesso ao site quando publicado fora do Claude (GitHub Pages).
+  // A senha de acesso e compartilhada pela equipe; o login fica valido no
+  // navegador (localStorage) e e renovado automaticamente ate a pessoa sair.
+  var AUTH_STORAGE_KEY = "scriptoriumAuthSession";
+  var AUTH_REFRESH_SKEW_MS = 60 * 1000; // renova 1 minuto antes de expirar
+  var authSession = null;
+  var authRefreshTimer = null;
+
+  function normalizeAuthSession(raw) {
+    if (!raw || !raw.access_token) return null;
+    var expiresInSec = typeof raw.expires_in === "number" ? raw.expires_in : 3600;
+    return {
+      accessToken: raw.access_token,
+      refreshToken: raw.refresh_token || (authSession && authSession.refreshToken) || "",
+      expiresAt: Date.now() + expiresInSec * 1000,
+      userEmail: (raw.user && raw.user.email) || (authSession && authSession.userEmail) || ""
+    };
+  }
+  function loadStoredAuthSession() {
+    try {
+      var raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.accessToken || !parsed.refreshToken) return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+  function saveStoredAuthSession(session) {
+    try {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+    } catch (e) {}
+  }
+  function clearStoredAuthSession() {
+    try {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (e) {}
+  }
+  function isAuthSessionValid(session) {
+    return !!(session && session.accessToken && session.expiresAt && session.expiresAt > Date.now() + AUTH_REFRESH_SKEW_MS);
+  }
+  function supabaseAuthSignIn(email, password) {
+    return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) {
+          var err = new Error((data && (data.error_description || data.msg)) || "auth_failed");
+          err.status = res.status;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+  function supabaseAuthRefresh(refreshToken) {
+    return fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("refresh_failed");
+      return res.json();
+    });
+  }
+  function scheduleAuthRefresh(session) {
+    if (authRefreshTimer) { clearTimeout(authRefreshTimer); authRefreshTimer = null; }
+    if (!session || !session.refreshToken) return;
+    var delay = Math.max(session.expiresAt - Date.now() - AUTH_REFRESH_SKEW_MS, 5000);
+    authRefreshTimer = setTimeout(function () {
+      supabaseAuthRefresh(session.refreshToken).then(function (data) {
+        var next = normalizeAuthSession(data);
+        if (!next) throw new Error("refresh_empty");
+        authSession = next;
+        saveStoredAuthSession(next);
+        scheduleAuthRefresh(next);
+      }).catch(function () {
+        handleAuthExpired();
+      });
+    }, delay);
+  }
+  function showAuthGate(message) {
+    var gate = qs("#authGate");
+    if (gate) gate.hidden = false;
+    var errEl = qs("#authGateError");
+    if (errEl) {
+      if (message) { errEl.textContent = message; errEl.hidden = false; }
+      else { errEl.textContent = ""; errEl.hidden = true; }
+    }
+    var pwField = qs("#authGatePassword");
+    if (pwField) {
+      pwField.value = "";
+      setTimeout(function () { try { pwField.focus(); } catch (e) {} }, 0);
+    }
+  }
+  function hideAuthGate() {
+    var gate = qs("#authGate");
+    if (gate) gate.hidden = true;
+  }
+  function updateAuthUI() {
+    var btn = qs("#logoutBtn");
+    if (btn) btn.hidden = !authSession;
+  }
+  function handleAuthExpired() {
+    authSession = null;
+    clearStoredAuthSession();
+    if (authRefreshTimer) { clearTimeout(authRefreshTimer); authRefreshTimer = null; }
+    updateAuthUI();
+    showAuthGate("Sessao expirada. Informe a senha novamente para continuar.");
+  }
+  function proceedAfterAuth() {
+    hideAuthGate();
+    updateAuthUI();
+    loadFromSupabase();
+    loadSkillsFromSupabase();
+  }
+  function wireAuthGate() {
+    var form = qs("#authGateForm");
+    if (form && !form.dataset.wired) {
+      form.dataset.wired = "1";
+      form.addEventListener("submit", function (evt) {
+        evt.preventDefault();
+        var pwField = qs("#authGatePassword");
+        var submitBtn = qs("#authGateSubmit");
+        var password = pwField ? pwField.value : "";
+        var errEl = qs("#authGateError");
+        if (errEl) { errEl.textContent = ""; errEl.hidden = true; }
+        if (!password) return;
+        if (submitBtn) submitBtn.disabled = true;
+        supabaseAuthSignIn(AUTH_TEAM_EMAIL, password).then(function (data) {
+          var session = normalizeAuthSession(data);
+          if (!session) throw new Error("empty_session");
+          authSession = session;
+          saveStoredAuthSession(session);
+          scheduleAuthRefresh(session);
+          proceedAfterAuth();
+        }).catch(function () {
+          if (errEl) { errEl.textContent = "Senha incorreta. Tente novamente."; errEl.hidden = false; }
+        }).then(function () {
+          if (submitBtn) submitBtn.disabled = false;
+        });
+      });
+    }
+    var logoutBtn = qs("#logoutBtn");
+    if (logoutBtn && !logoutBtn.dataset.wired) {
+      logoutBtn.dataset.wired = "1";
+      logoutBtn.addEventListener("click", function () {
+        authSession = null;
+        clearStoredAuthSession();
+        if (authRefreshTimer) { clearTimeout(authRefreshTimer); authRefreshTimer = null; }
+        scripts = [];
+        claudeSkills = [];
+        renderGrid();
+        renderSkillsGrid();
+        updateAuthUI();
+        showAuthGate();
+      });
+    }
+  }
+  function initAuthGate() {
+    wireAuthGate();
+    var stored = loadStoredAuthSession();
+    if (isAuthSessionValid(stored)) {
+      authSession = stored;
+      scheduleAuthRefresh(stored);
+      proceedAfterAuth();
+    } else if (stored && stored.refreshToken) {
+      supabaseAuthRefresh(stored.refreshToken).then(function (data) {
+        var session = normalizeAuthSession(data);
+        if (!session) throw new Error("empty_session");
+        authSession = session;
+        saveStoredAuthSession(session);
+        scheduleAuthRefresh(session);
+        proceedAfterAuth();
+      }).catch(function () {
+        clearStoredAuthSession();
+        updateAuthUI();
+        showAuthGate();
+      });
+    } else {
+      updateAuthUI();
+      showAuthGate();
+    }
+  }
+
   function mapRowToScript(r) {
     return {
       id: r.id, title: r.title, system: r.system, description: r.description || "",
@@ -1686,6 +1936,7 @@
     return fetch(SUPABASE_URL + "/rest/v1/scripts?select=*&order=updated_at.desc", {
       headers: supabaseHeaders()
     }).then(function (res) {
+      if (res.status === 401) handleAuthExpired();
       if (!res.ok) throw new Error("http_" + res.status);
       return res.json();
     }).then(function (rows) {
@@ -1729,7 +1980,9 @@
       }));
     });
     Promise.all(ops).then(function (results) {
+      var authExpired = results.some(function (r) { return r.status === 401; });
       var failed = results.filter(function (r) { return !r.ok; });
+      if (authExpired) handleAuthExpired();
       if (failed.length) { throw new Error("save_failed"); }
       scripts = nextScripts;
       renderGrid();
@@ -1751,6 +2004,7 @@
     return fetch(SUPABASE_URL + "/rest/v1/claude_skills?select=*&order=updated_at.desc", {
       headers: supabaseHeaders()
     }).then(function (res) {
+      if (res.status === 401) handleAuthExpired();
       if (!res.ok) throw new Error("http_" + res.status);
       return res.json();
     }).then(function (rows) {
@@ -1794,7 +2048,9 @@
       }));
     });
     Promise.all(ops).then(function (results) {
+      var authExpired = results.some(function (r) { return r.status === 401; });
       var failed = results.filter(function (r) { return !r.ok; });
+      if (authExpired) handleAuthExpired();
       if (failed.length) { throw new Error("save_failed"); }
       claudeSkills = nextSkills;
       renderSkillsGrid();
@@ -4368,8 +4624,7 @@
       } else if (supabaseConfigured()) {
         capability = null;
         writable = true;
-        loadFromSupabase();
-        loadSkillsFromSupabase();
+        initAuthGate();
       } else {
         capability = null; writable = false; showReadonlyBanner();
       }
