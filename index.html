@@ -805,7 +805,6 @@
   .sm-ai-hint[hidden] { display: none; }
   #smGenerateAiBtn[hidden] { display: none; }
   #smGenerateAiBtn:disabled { opacity: 0.6; cursor: default; }
-  .sm-vars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
   .sm-var-field { display: flex; flex-direction: column; gap: 6px; }
   .sm-var-field label { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
   .sm-filetype-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; transition: opacity 0.12s ease; }
@@ -1123,7 +1122,7 @@
           '<div class="tool-page">' +
             '<div class="cron-intro">' +
               '<h2>Script Maker</h2>' +
-              '<p>Cole a consulta base em BFC-Script, escolha o tipo de geracao desejado e clique em Gerar. O comportamento de cada tipo de geracao ainda sera definido - por enquanto esta e a estrutura da pagina.</p>' +
+              '<p>Cole a consulta base em BFC-Script, escolha o tipo de geracao desejado e clique em Gerar com IA.</p>' +
             '</div>' +
             '<div class="tool-field-card">' +
               '<h4>Consulta (BFC-Script) <span class="help-tip">' +
@@ -1131,17 +1130,6 @@
                 '<span class="help-tip-box" id="smQueryHelp" role="tooltip">Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script.</span>' +
               '</span></h4>' +
               '<textarea class="b64-textarea" id="smQueryInput" placeholder="Cole aqui a consulta, por exemplo:&#10;fonteImoveis = Dados.tributos.v2.imoveis;&#10;filtroImoveis = &quot;situacao = &apos;ATIVADO&apos;&quot;&#10;dadosImoveis = fonteImoveis.busca(criterio: filtroImoveis, campos: &quot;id&quot;)&#10;percorrer (dadosImoveis) { itemImoveis -&gt;&#10;  id = itemImoveis.id&#10;}" spellcheck="false"></textarea>' +
-            '</div>' +
-            '<div class="tool-field-card">' +
-              '<h4>Variaveis</h4>' +
-              '<p class="sm-option-hint">Informe as variaveis presentes na consulta que serao utilizadas na geracao do script.</p>' +
-              '<div class="sm-vars-grid">' +
-                '<div class="sm-var-field"><label for="smVar1">Variavel 1</label><input type="text" id="smVar1" placeholder="Nome da variavel" /></div>' +
-                '<div class="sm-var-field"><label for="smVar2">Variavel 2</label><input type="text" id="smVar2" placeholder="Nome da variavel" /></div>' +
-                '<div class="sm-var-field"><label for="smVar3">Variavel 3</label><input type="text" id="smVar3" placeholder="Nome da variavel" /></div>' +
-                '<div class="sm-var-field"><label for="smVar4">Variavel 4</label><input type="text" id="smVar4" placeholder="Nome da variavel" /></div>' +
-                '<div class="sm-var-field"><label for="smVar5">Variavel 5</label><input type="text" id="smVar5" placeholder="Nome da variavel" /></div>' +
-              '</div>' +
             '</div>' +
             '<div class="tool-field-card">' +
               '<h4>Tipo de geracao</h4>' +
@@ -1163,10 +1151,6 @@
                   '<button type="button" class="b64-mode-btn" data-apimode="lote">Lote de IDs</button>' +
                 '</div>' +
               '</div>' +
-              '<div class="sm-var-field" id="smApiListVarField" hidden>' +
-                '<label for="smApiListVar">Variavel de saida (lista de IDs)</label>' +
-                '<input type="text" id="smApiListVar" placeholder="Ex: idsAlvo" />' +
-              '</div>' +
               '<div class="sm-var-field">' +
                 '<label for="smApiUrl">URL API</label>' +
                 '<input type="text" id="smApiUrl" placeholder="https://tributos.betha.cloud/service-layer-tributos/api/imoveis" />' +
@@ -1186,13 +1170,12 @@
               '</div>' +
             '</div>' +
             '<div class="sm-actions">' +
-              '<button class="btn btn-primary" type="button" id="smGenerateBtn">Gerar</button>' +
-              '<button class="btn btn-secondary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
+              '<button class="btn btn-primary" type="button" id="smGenerateAiBtn" hidden>Gerar com IA</button>' +
             '</div>' +
-            '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta consultas fora dos formatos reconhecidos pelo gerador padrao. Sempre revise o script antes de usar.</p>' +
+            '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta a consulta colada e monta o script completo. Sempre revise o script antes de usar.</p>' +
             '<div class="tool-field-card">' +
               '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
-              '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar.</code></div>' +
+              '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar com IA.</code></div>' +
             '</div>' +
           '</div>' +
         '</section>' +
@@ -3973,11 +3956,9 @@
       var urlInput = qs("#smApiUrl");
       var methodInput = qs("#smApiMethod");
       var paramsInput = qs("#smApiParams");
-      var listVarInput = qs("#smApiListVar");
       if (urlInput) urlInput.disabled = !apiEnabled;
       if (methodInput) methodInput.disabled = !apiEnabled;
       if (paramsInput) paramsInput.disabled = !apiEnabled;
-      if (listVarInput) listVarInput.disabled = !apiEnabled;
       qsa("#smApiModeToggle .b64-mode-btn").forEach(function (btn) {
         btn.disabled = !apiEnabled;
       });
@@ -3986,11 +3967,6 @@
 
   var smApiMode = "single";
 
-  function updateSmApiModeUI() {
-    var listField = qs("#smApiListVarField");
-    if (listField) listField.hidden = smApiMode !== "lote";
-  }
-
   function wireSmApiMode() {
     var btns = qsa("#smApiModeToggle .b64-mode-btn");
     btns.forEach(function (btn) {
@@ -3998,7 +3974,6 @@
         if (btn.disabled) return;
         smApiMode = btn.getAttribute("data-apimode") || "single";
         btns.forEach(function (b) { b.classList.toggle("active", b === btn); });
-        updateSmApiModeUI();
       });
     });
   }
@@ -4014,457 +3989,6 @@
     });
   }
 
-  function smEscapeRegExp(s) {
-    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-
-  // Encontra o indice do ")" que fecha o "(" localizado em openParenIdx, contando
-  // parenteses aninhados (ex.: campos: "id, contribuinte(id)") corretamente.
-  function smFindMatchingCloseParen(text, openParenIdx) {
-    var depth = 0;
-    for (var i = openParenIdx; i < text.length; i++) {
-      var ch = text.charAt(i);
-      if (ch === "(") depth++;
-      else if (ch === ")") {
-        depth--;
-        if (depth === 0) return i;
-      }
-    }
-    return -1;
-  }
-
-  // Localiza uma chamada "<expr>.busca(<args>)" em text a partir de fromIndex,
-  // tratando corretamente parenteses aninhados dentro dos argumentos.
-  function smFindBuscaCall(text, fromIndex) {
-    var idx = text.indexOf(".busca(", fromIndex || 0);
-    if (idx === -1) return null;
-    var openParenIdx = idx + 6;
-    var closeParenIdx = smFindMatchingCloseParen(text, openParenIdx);
-    if (closeParenIdx === -1) return null;
-    var exprStart = idx;
-    while (exprStart > 0 && /[\w$.]/.test(text.charAt(exprStart - 1))) exprStart--;
-    return {
-      start: exprStart,
-      end: closeParenIdx + 1,
-      exprText: text.slice(exprStart, idx),
-      argsText: text.slice(openParenIdx + 1, closeParenIdx)
-    };
-  }
-
-  // Localiza o bloco "percorrer (<expr>) { iterVar -> ... }" em text a partir de fromIndex.
-  // <expr> pode ser tanto uma variavel simples (dadosX) quanto uma chamada inline
-  // (fonteX.busca(...)), inclusive com quebras de linha e parenteses aninhados.
-  function smFindPercorrerBlock(text, fromIndex) {
-    var re = /percorrer\s*\(/g;
-    re.lastIndex = fromIndex || 0;
-    var m = re.exec(text);
-    if (!m) return null;
-    var openParenIdx = m.index + m[0].length - 1;
-    var closeParenIdx = smFindMatchingCloseParen(text, openParenIdx);
-    if (closeParenIdx === -1) return null;
-    var rest = text.slice(closeParenIdx + 1);
-    var armMatch = rest.match(/^\s*\{\s*([A-Za-z_$][\w$]*)\s*->/);
-    if (!armMatch) return null;
-    return {
-      start: m.index,
-      collectionExpr: text.slice(openParenIdx + 1, closeParenIdx).trim(),
-      iterVar: armMatch[1]
-    };
-  }
-
-  function smBuildExtractScript(query, vars, fileType) {
-    var block = smFindPercorrerBlock(query, 0);
-    if (!block) return null;
-    var setup = query.slice(0, block.start).replace(/\s+$/, "");
-    var collectionVar = block.collectionExpr;
-    var iterVar = block.iterVar;
-    var ext = fileType === "csv" ? "csv" : "txt";
-    var fileName = "Resultado." + ext;
-    var lines = setup.length ? setup.split("\n") : [];
-    lines.push("arquivo = Arquivo.novo('" + fileName + "', '" + ext + "', [encoding: 'UTF-8'])");
-    lines.push("percorrer (" + collectionVar + ") { " + iterVar + " ->");
-    var fields = vars.map(function (v) { return (v || "").trim(); }).filter(function (v) { return v.length > 0; });
-    if (!fields.length) return { error: "novars" };
-    if (fields.length === 1) {
-      lines.push("    arquivo.escrever(" + iterVar + "." + fields[0] + ".toString())");
-    } else {
-      var parts = fields.map(function (field, idx) {
-        return idx === 0
-          ? "${" + iterVar + "." + field + "}"
-          : "${" + iterVar + "." + field + " ?: ''}";
-      });
-      lines.push("    arquivo.escrever(\"" + parts.join(";") + "\")");
-    }
-    lines.push("    arquivo.novaLinha()");
-    lines.push("}");
-    lines.push("Resultado.arquivo(arquivo, '" + fileName + "')");
-    return { script: lines.join("\n") };
-  }
-
-  function smBuildApiScript(query, apiUrl, paramsText, varNames, httpMethod) {
-    if (!apiUrl) return { error: "nourl" };
-    var template;
-    try {
-      var parsed = JSON.parse(paramsText);
-      template = Array.isArray(parsed) ? parsed[0] : parsed;
-    } catch (e) {
-      return { error: "invalidjson" };
-    }
-    if (!template || typeof template !== "object") return { error: "invalidjson" };
-
-    var block = smFindPercorrerBlock(query, 0);
-    if (!block) return { error: "nopercorrer" };
-    var setup = query.slice(0, block.start).replace(/\s+$/, "");
-    var collectionExpr = block.collectionExpr;
-    var iterVar = block.iterVar;
-
-    // A consulta pode vir de dois jeitos:
-    //   1) variavel = fonte.busca(...);  percorrer (variavel) { item -> ... }
-    //   2) percorrer (fonte.busca(...)) { item -> ... }
-    var isInlineBusca = false;
-    var buscaExprText, buscaArgs, assignVarName, assignIndent, buscaSpanStart, buscaSpanEnd;
-
-    var bareVarMatch = collectionExpr.match(/^([A-Za-z_$][\w$]*)$/);
-    if (bareVarMatch) {
-      var varName = bareVarMatch[1];
-      var assignRe = new RegExp("^(\\s*)" + smEscapeRegExp(varName) + "\\s*=\\s*", "m");
-      var assignMatch = setup.match(assignRe);
-      var buscaCall = assignMatch ? smFindBuscaCall(setup, assignMatch.index + assignMatch[0].length) : null;
-      if (!assignMatch || !buscaCall || buscaCall.start !== assignMatch.index + assignMatch[0].length) {
-        return { error: "nobusca" };
-      }
-      assignIndent = assignMatch[1];
-      assignVarName = varName;
-      buscaExprText = buscaCall.exprText;
-      buscaArgs = buscaCall.argsText;
-      buscaSpanStart = assignMatch.index;
-      buscaSpanEnd = buscaCall.end;
-    } else {
-      var inlineBusca = smFindBuscaCall(collectionExpr, 0);
-      if (!inlineBusca || inlineBusca.start !== 0 || inlineBusca.end !== collectionExpr.length) {
-        return { error: "nobusca" };
-      }
-      isInlineBusca = true;
-      buscaExprText = inlineBusca.exprText;
-      buscaArgs = inlineBusca.argsText;
-    }
-
-    var criterioMatch = buscaArgs.match(/criterio\s*:\s*([A-Za-z_$][\w$]*)/);
-    var camposMatch = buscaArgs.match(/campos\s*:\s*"([^"]*)"/);
-    var filtroVarName = criterioMatch ? criterioMatch[1] : null;
-    var existingCampos = camposMatch
-      ? camposMatch[1].split(",").map(function (s) { return s.trim(); }).filter(Boolean)
-      : [];
-
-    var filtroMap = {};
-    if (filtroVarName) {
-      var filtroAssignRegex = new RegExp("^\\s*" + smEscapeRegExp(filtroVarName) + "\\s*=\\s*\"([^\"]*)\"", "m");
-      var filtroAssignMatch = setup.match(filtroAssignRegex);
-      if (filtroAssignMatch) {
-        filtroAssignMatch[1].split(/\s+(?:and|AND|&&)\s+/).forEach(function (clause) {
-          var clauseMatch = clause.match(/^\s*([A-Za-z_$][\w$]*)\s*=\s*(.+?)\s*$/);
-          if (!clauseMatch) return;
-          var ck = clauseMatch[1];
-          var cv = clauseMatch[2].trim();
-          var isNumeric = /^-?\d+(\.\d+)?$/.test(cv);
-          if (!isNumeric && /^['"].*['"]$/.test(cv)) {
-            cv = cv.slice(1, -1);
-          }
-          filtroMap[ck.toLowerCase()] = { rawValue: cv, isNumeric: isNumeric };
-        });
-      }
-    }
-
-    var varList = (varNames || []).map(function (v) { return (v || "").trim(); }).filter(Boolean);
-    var usedVars = [];
-    var placeholders = [];
-
-    function resolveLeaf(key) {
-      if (key) {
-        var normKey = key.toLowerCase();
-        if (normKey === "idintegracao") {
-          return "'1'";
-        }
-        var matchedVar = varList.filter(function (v) { return v.toLowerCase() === normKey; })[0];
-        if (matchedVar) {
-          if (usedVars.indexOf(matchedVar) === -1) usedVars.push(matchedVar);
-          return iterVar + "." + matchedVar;
-        }
-        if (filtroMap[normKey]) {
-          var f = filtroMap[normKey];
-          return f.isNumeric ? f.rawValue : ("'" + f.rawValue.replace(/'/g, "\\'") + "'");
-        }
-      }
-      if (placeholders.indexOf(key) === -1) placeholders.push(key);
-      return "null /* TODO: definir origem de \"" + key + "\" */";
-    }
-
-    function groovyLiteral(value, indent, keyForLeaf) {
-      var innerIndent = indent + "    ";
-      if (Array.isArray(value)) {
-        if (!value.length) return "[]";
-        var items = value.map(function (v) { return innerIndent + groovyLiteral(v, innerIndent, keyForLeaf); });
-        return "[\n" + items.join(",\n") + "\n" + indent + "]";
-      }
-      if (value && typeof value === "object") {
-        var keys = Object.keys(value);
-        if (!keys.length) return "[:]";
-        var entries = keys.map(function (k) {
-          return innerIndent + k + ": " + groovyLiteral(value[k], innerIndent, k);
-        });
-        return "[\n" + entries.join(",\n") + "\n" + indent + "]";
-      }
-      return resolveLeaf(keyForLeaf);
-    }
-
-    var payloadLiteral = groovyLiteral(template, "    ", null);
-
-    var mergedCampos = existingCampos.slice();
-    usedVars.forEach(function (v) {
-      var already = mergedCampos.some(function (c) { return c.toLowerCase() === v.toLowerCase(); });
-      if (!already) mergedCampos.push(v);
-    });
-
-    var newBuscaArgs = "criterio: " + (filtroVarName || "") + ", campos: \"" + mergedCampos.join(", ") + "\"";
-    var newBuscaCall = buscaExprText + ".busca(" + newBuscaArgs + ")";
-
-    var lines;
-    if (isInlineBusca) {
-      lines = setup.length ? setup.split("\n") : [];
-      lines.push("payload = []");
-      if (placeholders.length) {
-        lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
-        placeholders.forEach(function (p) {
-          lines.push("//   - " + p);
-        });
-      }
-      lines.push("percorrer (" + newBuscaCall + ") { " + iterVar + " ->");
-      lines.push("    payload << " + payloadLiteral);
-      lines.push("}");
-    } else {
-      var newAssignLine = assignIndent + assignVarName + " = " + newBuscaCall;
-      var newSetup = setup.slice(0, buscaSpanStart) + newAssignLine + setup.slice(buscaSpanEnd);
-      lines = newSetup.length ? newSetup.split("\n") : [];
-      lines.push("payload = []");
-      if (placeholders.length) {
-        lines.push("// TODO: revisar os campos abaixo antes de usar em producao (nenhuma variavel ou filtro correspondente encontrado):");
-        placeholders.forEach(function (p) {
-          lines.push("//   - " + p);
-        });
-      }
-      lines.push("percorrer (" + collectionExpr + ") { " + iterVar + " ->");
-      lines.push("    payload << " + payloadLiteral);
-      lines.push("}");
-    }
-    lines.push("resposta = Http.servico(\"" + apiUrl + "\")");
-    lines.push("    .chaveIntegracao(Variavel.CHAVE_INTEGRACAO)");
-    var allowedMethods = ["PUT", "POST", "PATCH", "DELETE"];
-    var method = (httpMethod || "").toUpperCase();
-    if (allowedMethods.indexOf(method) === -1) method = "POST";
-    lines.push("    ." + method + "(payload, Http.JSON)");
-    lines.push("se (!resposta.sucesso()) {");
-    lines.push("    suspender \"Erro ao enviar dados: ${resposta.codigo()} - ${resposta.conteudo()}\"");
-    lines.push("}");
-    lines.push("retornar resposta.conteudo()");
-
-    return { script: lines.join("\n"), placeholders: placeholders };
-  }
-
-  function smBuildApiLoteScript(query, apiUrl, httpMethod, paramsText, listVarName) {
-    if (!listVarName) return { error: "nolistvar" };
-    if (!apiUrl) return { error: "nourl" };
-    var template;
-    try {
-      var parsed = JSON.parse(paramsText);
-      template = Array.isArray(parsed) ? parsed[0] : parsed;
-    } catch (e) {
-      return { error: "invalidjson" };
-    }
-    if (!template || typeof template !== "object") return { error: "invalidjson" };
-
-    var allowedMethods = ["PUT", "POST", "PATCH", "DELETE"];
-    var method = (httpMethod || "").toUpperCase();
-    if (allowedMethods.indexOf(method) === -1) method = "POST";
-
-    function formatLiteral(value) {
-      if (value === null) return "null";
-      if (typeof value === "boolean") return value ? "true" : "false";
-      if (typeof value === "number") return String(value);
-      return "'" + String(value).replace(/'/g, "\\'") + "'";
-    }
-
-    function groovyLiteralLote(value, indent, keyForLeaf) {
-      var innerIndent = indent + "    ";
-      if (Array.isArray(value)) {
-        if (!value.length) return "[]";
-        var items = value.map(function (v) { return innerIndent + groovyLiteralLote(v, innerIndent, keyForLeaf); });
-        return "[\n" + items.join(",\n") + "\n" + indent + "]";
-      }
-      if (value && typeof value === "object") {
-        var keys = Object.keys(value);
-        if (!keys.length) return "[:]";
-        var entries = keys.map(function (k) {
-          return innerIndent + k + ": " + groovyLiteralLote(value[k], innerIndent, k);
-        });
-        return "[\n" + entries.join(",\n") + "\n" + indent + "]";
-      }
-      if (keyForLeaf) {
-        var normKey = keyForLeaf.toLowerCase();
-        if (normKey === "id") return "id";
-        if (normKey === "idintegracao") return "\"INTEGRACAO_${id}\"";
-      }
-      return formatLiteral(value);
-    }
-
-    var payloadLiteral = groovyLiteralLote(template, "        ", null);
-
-    var warnings = [];
-    if (query.indexOf(listVarName) === -1) {
-      warnings.push("A variavel \"" + listVarName + "\" nao foi encontrada na consulta informada - confirme se o nome esta correto.");
-    }
-
-    var lines = [];
-    lines.push(query.replace(/\s+$/, ""));
-    lines.push("");
-    lines.push("// ==========================================================");
-    lines.push("// Integracao - envio para API externa (" + method + ")");
-    lines.push("// ==========================================================");
-    lines.push("URL_API = \"" + apiUrl + "\"");
-    lines.push("CHAVE_INTEGRACAO_API = Variavel?.CHAVE_INTEGRACAO");
-    lines.push("");
-    lines.push("esquemaLog = [");
-    lines.push("    id            : Esquema.inteiro,");
-    lines.push("    idIntegracao  : Esquema.caracter,");
-    lines.push("    codigoRetorno : Esquema.caracter,");
-    lines.push("    sucesso       : Esquema.caracter,");
-    lines.push("    mensagem      : Esquema.caracter");
-    lines.push("]");
-    lines.push("fonteLog = Dados.dinamico.v2.novo(esquemaLog)");
-    lines.push("");
-    lines.push("se (" + listVarName + ".isEmpty()) {");
-    lines.push("    retornar fonteLog");
-    lines.push("}");
-    lines.push("");
-    lines.push("TAMANHO_LOTE = 50");
-    lines.push(listVarName + ".collate(TAMANHO_LOTE).each { lote ->");
-    lines.push("    payload = lote.collect { id ->");
-    lines.push("        " + payloadLiteral);
-    lines.push("    }");
-    lines.push("    tentar {");
-    lines.push("        resposta = Http.servico(URL_API)");
-    lines.push("            .chaveIntegracao(CHAVE_INTEGRACAO_API)");
-    lines.push("            ." + method + "(payload, Http.JSON)");
-    lines.push("    } tratar {");
-    lines.push("        esperar 2.segundo");
-    lines.push("        resposta = Http.servico(URL_API)");
-    lines.push("            .chaveIntegracao(CHAVE_INTEGRACAO_API)");
-    lines.push("            ." + method + "(payload, Http.JSON)");
-    lines.push("    }");
-    lines.push("    codigoHttp  = resposta.codigo()");
-    lines.push("    loteOk      = (codigoHttp == 200 || codigoHttp == 201 || codigoHttp == 204)");
-    lines.push("    conteudoRes = resposta.conteudo()");
-    lines.push("    lote.each { id ->");
-    lines.push("        fonteLog.inserirLinha([");
-    lines.push("            id            : id,");
-    lines.push("            idIntegracao  : \"INTEGRACAO_${id}\",");
-    lines.push("            codigoRetorno : \"${codigoHttp}\",");
-    lines.push("            sucesso       : loteOk ? \"SIM\" : \"NAO\",");
-    lines.push("            mensagem      : loteOk ? \"Atualizado com sucesso\" : conteudoRes");
-    lines.push("        ])");
-    lines.push("    }");
-    lines.push("}");
-    lines.push("retornar fonteLog");
-
-    return { script: lines.join("\n"), warnings: warnings };
-  }
-
-  function wireSmGenerate() {
-    var btn = qs("#smGenerateBtn");
-    var input = qs("#smQueryInput");
-    var output = qs("#smOutput");
-    if (!btn || !input || !output) return;
-    btn.addEventListener("click", function () {
-      var query = input.value.trim();
-      if (!query) {
-        showToast("Cole a consulta antes de gerar.", "error");
-        return;
-      }
-      if (smSelectedOption === "extrair_arquivo") {
-        var vars = [1, 2, 3, 4, 5].map(function (i) {
-          var field = qs("#smVar" + i);
-          return field ? field.value : "";
-        });
-        var result = smBuildExtractScript(query, vars, smFileType);
-        if (!result) {
-          showToast("Nao foi possivel localizar o bloco \"percorrer\" na consulta.", "error");
-          return;
-        }
-        if (result.error === "novars") {
-          showToast("Informe ao menos uma variavel para gerar o script.", "error");
-          return;
-        }
-        output.textContent = result.script;
-        return;
-      }
-      if (smSelectedOption === "usar_api") {
-        var apiUrl = (qs("#smApiUrl") || {}).value || "";
-        var apiMethod = (qs("#smApiMethod") || {}).value || "POST";
-        var paramsText = (qs("#smApiParams") || {}).value || "";
-
-        if (smApiMode === "lote") {
-          var listVarName = ((qs("#smApiListVar") || {}).value || "").trim();
-          var loteResult = smBuildApiLoteScript(query, apiUrl.trim(), apiMethod, paramsText.trim(), listVarName);
-          if (loteResult.error === "nolistvar") {
-            showToast("Informe o nome da variavel de saida (lista de IDs).", "error");
-            return;
-          }
-          if (loteResult.error === "nourl") {
-            showToast("Informe a URL da API.", "error");
-            return;
-          }
-          if (loteResult.error === "invalidjson") {
-            showToast("JSON de parametros invalido. Verifique a sintaxe.", "error");
-            return;
-          }
-          output.textContent = loteResult.script;
-          if (loteResult.warnings && loteResult.warnings.length) {
-            showToast(loteResult.warnings[0], "error");
-          }
-          return;
-        }
-
-        var apiVars = [1, 2, 3, 4, 5].map(function (i) {
-          var field = qs("#smVar" + i);
-          return field ? field.value : "";
-        });
-        var apiResult = smBuildApiScript(query, apiUrl.trim(), paramsText.trim(), apiVars, apiMethod);
-        if (apiResult.error === "nourl") {
-          showToast("Informe a URL da API.", "error");
-          return;
-        }
-        if (apiResult.error === "invalidjson") {
-          showToast("JSON de parametros invalido. Verifique a sintaxe.", "error");
-          return;
-        }
-        if (apiResult.error === "nopercorrer") {
-          showToast("Nao foi possivel localizar o bloco \"percorrer\" na consulta.", "error");
-          return;
-        }
-        if (apiResult.error === "nobusca") {
-          showToast("Nao foi possivel localizar uma chamada \"busca(...)\" com criterio/campos na consulta.", "error");
-          return;
-        }
-        output.textContent = apiResult.script;
-        if (apiResult.placeholders && apiResult.placeholders.length) {
-          showToast("Script gerado com " + apiResult.placeholders.length + " campo(s) sem origem identificada - revise os TODOs.", "info");
-        }
-        return;
-      }
-      var opt = SM_OPTIONS.filter(function (o) { return o.key === smSelectedOption; })[0];
-      output.textContent = "// Geracao para \"" + (opt ? opt.label : "") + "\" ainda nao configurada.\n// Em breve este botao vai gerar o script completo a partir da consulta informada.";
-    });
-  }
-
   function updateSmAiButtonVisibility() {
     var btn = qs("#smGenerateAiBtn");
     var hint = qs("#smAiHint");
@@ -4477,23 +4001,11 @@
     var payload = { mode: smSelectedOption, query: query };
     if (smSelectedOption === "extrair_arquivo") {
       payload.fileType = smFileType;
-      payload.vars = [1, 2, 3, 4, 5].map(function (i) {
-        var field = qs("#smVar" + i);
-        return field ? field.value : "";
-      });
     } else if (smSelectedOption === "usar_api") {
       payload.apiMode = smApiMode;
       payload.apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
       payload.apiMethod = (qs("#smApiMethod") || {}).value || "POST";
       payload.apiParams = ((qs("#smApiParams") || {}).value || "").trim();
-      if (smApiMode === "lote") {
-        payload.apiListVar = ((qs("#smApiListVar") || {}).value || "").trim();
-      } else {
-        payload.vars = [1, 2, 3, 4, 5].map(function (i) {
-          var field = qs("#smVar" + i);
-          return field ? field.value : "";
-        });
-      }
     }
     return payload;
   }
@@ -4566,10 +4078,8 @@
     smFileType = "txt";
     smApiMode = "single";
     renderSmOptions();
-    updateSmApiModeUI();
     wireSmFileType();
     wireSmApiMode();
-    wireSmGenerate();
     wireSmGenerateAi();
     wireSmCopy();
     updateSmAiButtonVisibility();
