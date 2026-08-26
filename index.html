@@ -465,6 +465,29 @@
   .auth-gate-card p.auth-gate-sub { color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px; }
   .auth-gate-form { display: flex; flex-direction: column; gap: 12px; }
   .auth-gate-form .btn { width: 100%; }
+  .auth-gate-pw-wrap { position: relative; display: flex; }
+  .auth-gate-pw-wrap input { flex: 1; padding-right: 42px; }
+  .auth-gate-pw-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 8px;
+  }
+  .auth-gate-pw-toggle:hover { color: var(--text); background: var(--surface-2); }
+  .auth-gate-pw-toggle svg { display: block; }
+  .auth-gate-pw-toggle .icon-eye-off[hidden],
+  .auth-gate-pw-toggle .icon-eye[hidden] { display: none; }
   .auth-gate-error {
     color: var(--danger-strong);
     font-size: 0.82rem;
@@ -890,7 +913,13 @@
     <h1>Scriptorium Betha</h1>
     <p class="auth-gate-sub">Acesso restrito a equipe. Informe a senha para continuar.</p>
     <form id="authGateForm" class="auth-gate-form">
-      <input type="password" id="authGatePassword" placeholder="Senha de acesso" autocomplete="current-password" required />
+      <div class="auth-gate-pw-wrap">
+        <input type="password" id="authGatePassword" placeholder="Senha de acesso" autocomplete="current-password" required />
+        <button type="button" class="auth-gate-pw-toggle" id="authGatePwToggle" aria-label="Mostrar senha" aria-pressed="false">
+          <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <svg class="icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.7 19.7 0 0 1 5.06-5.94M9.9 4.24A10.63 10.63 0 0 1 12 4c7 0 11 8 11 8a19.85 19.85 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+        </button>
+      </div>
       <button class="btn btn-primary" type="submit" id="authGateSubmit">Entrar</button>
       <p class="auth-gate-error" id="authGateError" hidden></p>
     </form>
@@ -1809,6 +1838,26 @@
       pwField.value = "";
       setTimeout(function () { try { pwField.focus(); } catch (e) {} }, 0);
     }
+    setAuthPasswordVisible(false);
+  }
+  function setAuthPasswordVisible(visible) {
+    var pwField = qs("#authGatePassword");
+    var toggleBtn = qs("#authGatePwToggle");
+    if (pwField) pwField.type = visible ? "text" : "password";
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-pressed", visible ? "true" : "false");
+      toggleBtn.setAttribute("aria-label", visible ? "Ocultar senha" : "Mostrar senha");
+      var eyeIcon = toggleBtn.querySelector(".icon-eye");
+      var eyeOffIcon = toggleBtn.querySelector(".icon-eye-off");
+      // Usa setAttribute/removeAttribute (nao a propriedade .hidden) porque em
+      // alguns navegadores o atributo "hidden" nao e refletido em elementos SVG.
+      if (eyeIcon) {
+        if (visible) eyeIcon.setAttribute("hidden", ""); else eyeIcon.removeAttribute("hidden");
+      }
+      if (eyeOffIcon) {
+        if (visible) eyeOffIcon.removeAttribute("hidden"); else eyeOffIcon.setAttribute("hidden", "");
+      }
+    }
   }
   function hideAuthGate() {
     var gate = qs("#authGate");
@@ -1856,6 +1905,16 @@
         }).then(function () {
           if (submitBtn) submitBtn.disabled = false;
         });
+      });
+    }
+    var pwToggleBtn = qs("#authGatePwToggle");
+    if (pwToggleBtn && !pwToggleBtn.dataset.wired) {
+      pwToggleBtn.dataset.wired = "1";
+      pwToggleBtn.addEventListener("click", function () {
+        var pwField = qs("#authGatePassword");
+        var isVisible = pwField && pwField.type === "text";
+        setAuthPasswordVisible(!isVisible);
+        if (pwField) { try { pwField.focus(); } catch (e) {} }
       });
     }
     var logoutBtn = qs("#logoutBtn");
