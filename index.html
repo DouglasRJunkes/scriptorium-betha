@@ -1973,8 +1973,22 @@
           saveStoredAuthSession(session);
           scheduleAuthRefresh(session);
           proceedAfterAuth();
-        }).catch(function () {
-          if (errEl) { errEl.textContent = "Senha incorreta. Tente novamente."; errEl.hidden = false; }
+        }).catch(function (err) {
+          // O status 400 do Supabase Auth e a resposta normal para "senha
+          // errada" (invalid_grant) - qualquer outro caso (sem status =
+          // falha de rede/CORS; 429 = rate limit; outro status = erro do
+          // servidor/projeto) NAO significa senha incorreta, e mostrar essa
+          // mensagem nesses casos so confundiria quem esta com a senha
+          // certa. Mostramos uma mensagem especifica para cada caso.
+          var msg = "Senha incorreta. Tente novamente.";
+          if (!err || !err.status) {
+            msg = "Nao foi possivel conectar ao servidor para entrar. Verifique sua conexao e tente novamente.";
+          } else if (err.status === 429) {
+            msg = "Muitas tentativas seguidas. Aguarde um momento e tente novamente.";
+          } else if (err.status !== 400) {
+            msg = "Nao foi possivel entrar agora (erro " + err.status + (err.message ? ": " + err.message : "") + "). Tente novamente em instantes.";
+          }
+          if (errEl) { errEl.textContent = msg; errEl.hidden = false; }
         }).then(function () {
           if (submitBtn) submitBtn.disabled = false;
         });
