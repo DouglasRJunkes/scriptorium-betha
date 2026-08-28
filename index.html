@@ -1060,7 +1060,8 @@
         { page: "manualintegracaocbm", label: "Manual Integração CBM" },
         { page: "manualpixbbcidadaoweb", label: "Manual Pix BB para Cidadão Web" },
         { page: "manualregistrosicoob", label: "Manual Registro Sicoob" },
-        { page: "manualregistrocaixa", label: "Manual Registro Caixa" }
+        { page: "manualregistrocaixa", label: "Manual Registro Caixa" },
+        { page: "manualsisobras", label: "Manual SisObras" }
       ] },
     { key: "pessoal", label: "Pessoal", docs: [
         { page: "apisfolha", label: "APIs Folha" },
@@ -1777,6 +1778,20 @@
             '<h2>Manual Registro Caixa</h2>' +
             '<p>Manual de registro da Caixa Econômica Federal.</p>' +
             '<a class="btn btn-primary" href="https://drive.google.com/file/d/1BfW1h8_Zgrhc7tqjLN5C63YLIY4qNygj/view?usp=sharing" target="_blank" rel="noopener noreferrer">' +
+              'Abrir documentação' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
+            '</a>' +
+            '<p class="empty-hint">Abre em uma nova aba (Google Drive). O conteúdo não pode ser incorporado diretamente aqui por restrição de segurança do documento.</p>' +
+          '</div>' +
+        '</section>' +
+        '<section class="page" id="page-manualsisobras" hidden>' +
+          '<div class="empty-state">' +
+            '<div class="empty-icon" aria-hidden="true">' +
+              '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>' +
+            '</div>' +
+            '<h2>Manual SisObras</h2>' +
+            '<p>Manual do SisObras (módulo Tributos).</p>' +
+            '<a class="btn btn-primary" href="https://drive.google.com/file/d/1WnNRxcdRV7v-H8U0c3O-2AFSKrYle_er/view?usp=sharing" target="_blank" rel="noopener noreferrer">' +
               'Abrir documentação' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>' +
             '</a>' +
@@ -4473,7 +4488,7 @@
     });
   }
 
-  var PAGES = ["scripts", "claudeskills", "apimaker", "cron", "base64", "bfcscript", "apistributos", "apisprocuradoria", "apisenotafly", "apisenotacloud", "apilivroeletronico", "apisfolha", "apisrh", "apisponto", "apiseducacao", "apissaude", "apiscontabil", "apisplanejamento", "apistesouraria", "apisconvenios", "apistransparencia", "apisalmoxarifado", "apiscompras", "apiscontratos", "apisfrotas", "apispatrimonio", "criticastributos", "criticasgestaofiscal", "criticasprotocolo", "criticasfolha", "criticaseducacao", "criticascontabil", "manualwebservicebb", "manualintegracaocbm", "manualpixbbcidadaoweb", "manualregistrosicoob", "manualregistrocaixa"];
+  var PAGES = ["scripts", "claudeskills", "apimaker", "cron", "base64", "bfcscript", "apistributos", "apisprocuradoria", "apisenotafly", "apisenotacloud", "apilivroeletronico", "apisfolha", "apisrh", "apisponto", "apiseducacao", "apissaude", "apiscontabil", "apisplanejamento", "apistesouraria", "apisconvenios", "apistransparencia", "apisalmoxarifado", "apiscompras", "apiscontratos", "apisfrotas", "apispatrimonio", "criticastributos", "criticasgestaofiscal", "criticasprotocolo", "criticasfolha", "criticaseducacao", "criticascontabil", "manualwebservicebb", "manualintegracaocbm", "manualpixbbcidadaoweb", "manualregistrosicoob", "manualregistrocaixa", "manualsisobras"];
 
   function switchPage(page) {
     if (PAGES.indexOf(page) === -1) return;
