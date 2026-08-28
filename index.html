@@ -572,7 +572,23 @@
 
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
   .detail-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; margin: 10px 0 16px; }
-  .detail-export-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-faint); margin: -8px 0 16px; }
+  .detail-export-callout {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin: -4px 0 16px;
+  }
+  .detail-export-callout-key { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto; }
+  .detail-export-callout-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-strong); white-space: nowrap; }
+  .detail-export-callout-value { font-family: "IBM Plex Mono", monospace; font-size: 0.88rem; font-weight: 600; color: var(--text); word-break: break-all; }
+  .detail-export-callout-copy { flex: 0 0 auto; padding: 4px 10px; font-size: 0.75rem; }
+  .detail-export-callout-valid { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
   .code-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .code-toolbar span { font-size: 0.75rem; color: var(--text-faint); font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.04em; }
   .code-block {
@@ -3060,14 +3076,32 @@
     body.appendChild(el("p", { "class": "detail-desc" }, s.description || "Sem descricao."));
 
     if (s.chaveExportacao || s.validoAte) {
-      var exportMeta = el("div", { "class": "detail-export-meta" });
+      // Destacado com fundo/borda de destaque (em vez de texto pequeno e
+      // apagado como antes) porque essa chave e usada pela equipe para
+      // integrar/importar o script em outro ambiente - e facil passar batido
+      // se ela nao chamar atencao junto da descricao do script.
+      var exportCallout = el("div", { "class": "detail-export-callout" });
       if (s.chaveExportacao) {
-        exportMeta.appendChild(el("span", {}, "Chave Exportação: " + s.chaveExportacao));
+        var keyWrap = el("div", { "class": "detail-export-callout-key" });
+        keyWrap.appendChild(el("span", { "class": "detail-export-callout-label" }, "Chave Exportação"));
+        keyWrap.appendChild(el("span", { "class": "detail-export-callout-value" }, s.chaveExportacao));
+        var keyCopyBtn = el("button", { "class": "btn btn-secondary detail-export-callout-copy", type: "button" }, "Copiar");
+        keyCopyBtn.addEventListener("click", function () {
+          var text = s.chaveExportacao;
+          var done = function () { keyCopyBtn.textContent = "Copiado!"; setTimeout(function () { keyCopyBtn.textContent = "Copiar"; }, 1600); };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+          } else {
+            fallbackCopy(text, done);
+          }
+        });
+        keyWrap.appendChild(keyCopyBtn);
+        exportCallout.appendChild(keyWrap);
       }
       if (s.validoAte) {
-        exportMeta.appendChild(el("span", {}, "Válido até: " + fmtDateOnly(s.validoAte)));
+        exportCallout.appendChild(el("span", { "class": "detail-export-callout-valid" }, "Válido até " + fmtDateOnly(s.validoAte)));
       }
-      body.appendChild(exportMeta);
+      body.appendChild(exportCallout);
     }
 
     var codeToolbar = el("div", { "class": "code-toolbar" });
