@@ -1202,59 +1202,21 @@
           '<div class="tool-page">' +
             '<div class="cron-intro">' +
               '<h2>Script Maker</h2>' +
-              '<p>Cole a consulta base em BFC-Script, escolha o tipo de geracao desejado e clique em Gerar com IA.</p>' +
+              '<p>Cole o script com erro, informe a mensagem de erro e clique em Gerar com IA para obter a versao corrigida.</p>' +
             '</div>' +
             '<div class="tool-field-card">' +
-              '<h4><span id="smQueryLabel">Consulta (BFC-Script)</span> <span class="help-tip">' +
+              '<h4><span id="smQueryLabel">Script com erro (BFC-Script)</span> <span class="help-tip">' +
                 '<button type="button" class="help-icon" aria-describedby="smQueryHelp">?</button>' +
-                '<span class="help-tip-box" id="smQueryHelp" role="tooltip">Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script.</span>' +
+                '<span class="help-tip-box" id="smQueryHelp" role="tooltip">Cole o script completo que apresentou o erro - a IA usa o script e a mensagem de erro abaixo para gerar a versao corrigida.</span>' +
               '</span></h4>' +
-              '<textarea class="b64-textarea" id="smQueryInput" placeholder="Cole aqui a consulta, por exemplo:&#10;fonteImoveis = Dados.tributos.v2.imoveis;&#10;filtroImoveis = &quot;situacao = &apos;ATIVADO&apos;&quot;&#10;dadosImoveis = fonteImoveis.busca(criterio: filtroImoveis, campos: &quot;id&quot;)&#10;percorrer (dadosImoveis) { itemImoveis -&gt;&#10;  id = itemImoveis.id&#10;}" spellcheck="false"></textarea>' +
+              '<textarea class="b64-textarea" id="smQueryInput" placeholder="Cole aqui o script completo que apresentou o erro" spellcheck="false"></textarea>' +
             '</div>' +
-            '<div class="tool-field-card">' +
-              '<h4>Tipo de geracao</h4>' +
-              '<div class="sm-options" id="smOptions"></div>' +
-              '<div class="sm-filetype-row" id="smFileTypeRow">' +
-                '<span class="sm-filetype-label">Tipo de retorno</span>' +
-                '<div class="b64-mode-toggle" id="smFileTypeToggle">' +
-                  '<button type="button" class="b64-mode-btn active" data-filetype="txt">TXT</button>' +
-                  '<button type="button" class="b64-mode-btn" data-filetype="csv">CSV</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="tool-field-card" id="smApiCard" hidden>' +
-              '<h4>Configuracao da API</h4>' +
-              '<div class="sm-var-field">' +
-                '<label>Modo de integracao</label>' +
-                '<div class="b64-mode-toggle" id="smApiModeToggle">' +
-                  '<button type="button" class="b64-mode-btn active" data-apimode="single">Registro unico</button>' +
-                  '<button type="button" class="b64-mode-btn" data-apimode="lote">Lote de IDs</button>' +
-                '</div>' +
-              '</div>' +
-              '<div class="sm-var-field">' +
-                '<label for="smApiUrl">URL API</label>' +
-                '<input type="text" id="smApiUrl" placeholder="https://tributos.betha.cloud/service-layer-tributos/api/imoveis" />' +
-              '</div>' +
-              '<div class="sm-var-field">' +
-                '<label for="smApiMethod">Tipo de movimentacao</label>' +
-                '<select id="smApiMethod">' +
-                  '<option value="POST" selected>POST</option>' +
-                  '<option value="PUT">PUT</option>' +
-                  '<option value="PATCH">PATCH</option>' +
-                  '<option value="DELETE">DELETE</option>' +
-                '</select>' +
-              '</div>' +
-              '<div class="sm-var-field">' +
-                '<label for="smApiParams">Parametros (JSON)</label>' +
-                '<textarea class="b64-textarea" id="smApiParams" placeholder="Cole aqui um JSON de exemplo do payload esperado pela API, ex:&#10;[&#10;  {&#10;    &quot;idIntegracao&quot;: &quot;INTEGRACAO1&quot;,&#10;    &quot;imoveis&quot;: {&#10;      &quot;idGerado&quot;: { &quot;id&quot;: 1 },&#10;      &quot;idBairro&quot;: 1,&#10;      &quot;bloco&quot;: &quot;A&quot;&#10;    }&#10;  }&#10;]" spellcheck="false"></textarea>' +
-              '</div>' +
-            '</div>' +
-            '<div class="tool-field-card" id="smErrorCard" hidden>' +
+            '<div class="tool-field-card" id="smErrorCard">' +
               '<h4>Erro apresentado</h4>' +
               '<p class="sm-option-hint">Cole a mensagem de erro retornada ao executar o script acima.</p>' +
               '<textarea class="b64-textarea" id="smErrorInput" placeholder="Cole aqui o erro apresentado, por exemplo:&#10;groovy.lang.MissingPropertyException: No such property: idContribuinte for class: Script1" spellcheck="false"></textarea>' +
             '</div>' +
-            '<div class="tool-field-card" id="smContextCard" hidden>' +
+            '<div class="tool-field-card" id="smContextCard">' +
               '<h4>Consideracoes</h4>' +
               '<p class="sm-option-hint">Contexto adicional opcional para a correcao: regras de negocio, dependencias entre scripts, ou qualquer informacao relevante.</p>' +
               '<textarea class="b64-textarea" id="smContextInput" placeholder="Ex: este script roda mensalmente via agendamento e depende do script utilitario_cnd." spellcheck="false"></textarea>' +
@@ -1268,13 +1230,13 @@
             '</div>' +
             '<div class="sm-progress" id="smProgress" hidden><div class="sm-progress-bar"></div></div>' +
             '<p class="sm-progress-label" id="smProgressLabel" hidden>Gerando com IA... scripts grandes podem levar mais tempo (a IA continua automaticamente se a resposta for maior que o limite de uma unica chamada).</p>' +
-            '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta a consulta colada e monta o script completo. Sempre revise o script antes de usar.</p>' +
+            '<p class="sm-ai-hint" id="smAiHint" hidden>Geracao com IA (Claude): interpreta o script colado e a mensagem de erro para montar a versao corrigida. Sempre revise o script antes de usar.</p>' +
             '<div class="sm-result-row">' +
               '<div class="tool-field-card sm-result-col">' +
                 '<div class="code-toolbar"><span>Script gerado</span><button class="btn btn-secondary" type="button" id="smCopyBtn">Copiar</button></div>' +
-                '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole a consulta, escolha um tipo de geracao e clique em Gerar com IA.</code></div>' +
+                '<div class="code-block"><code id="smOutput" class="cron-output-text">Cole o script com erro, informe a mensagem de erro e clique em Gerar com IA.</code></div>' +
               '</div>' +
-              '<div class="tool-field-card sm-result-col" id="smExplanationCard" hidden>' +
+              '<div class="tool-field-card sm-result-col" id="smExplanationCard">' +
                 '<div class="code-toolbar"><span>Diagnostico e correcoes</span></div>' +
                 '<div class="code-block"><p class="sm-explanation-text" id="smExplanationOutput">Apos gerar com IA, a causa do erro e as correcoes aplicadas aparecerao aqui.</p></div>' +
               '</div>' +
@@ -4092,121 +4054,7 @@
     wireB64Swap();
   }
 
-  var SM_OPTIONS = [
-    { key: "extrair_arquivo", label: "Extrair Resultado em arquivo", hint: "Gera um script que extrai o resultado da consulta para um arquivo TXT ou CSV." },
-    { key: "usar_api", label: "Utilizar API", hint: "Gera um script que envia os dados da consulta para uma API via POST." },
-    { key: "corrigir_script", label: "Corrigir Script", hint: "Cole o script com erro acima e informe a mensagem de erro para gerar uma versao corrigida." }
-  ];
-  var SM_QUERY_LABELS = {
-    extrair_arquivo: {
-      label: "Consulta (BFC-Script)",
-      help: "Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script."
-    },
-    usar_api: {
-      label: "Consulta (BFC-Script)",
-      help: "Necessario que a consulta informe o dado necessario em variaveis, para correta geracao do script."
-    },
-    corrigir_script: {
-      label: "Script com erro (BFC-Script)",
-      help: "Cole o script completo que apresentou o erro - a IA usa o script e a mensagem de erro abaixo para gerar a versao corrigida."
-    }
-  };
-  var smSelectedOption = SM_OPTIONS[0].key;
-  var smFileType = "txt";
   var smImportedScripts = {};
-
-  function renderSmOptions() {
-    var wrap = qs("#smOptions");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    SM_OPTIONS.forEach(function (opt) {
-      var btn = el("button", { type: "button", "class": "sm-option-btn" + (smSelectedOption === opt.key ? " active" : "") });
-      btn.appendChild(el("span", { "class": "sm-option-title" }, opt.label));
-      btn.appendChild(el("span", { "class": "sm-option-hint" }, opt.hint || "Comportamento a definir."));
-      btn.addEventListener("click", function () {
-        smSelectedOption = opt.key;
-        renderSmOptions();
-      });
-      wrap.appendChild(btn);
-    });
-    updateSmOptionFieldsState();
-  }
-
-  function updateSmOptionFieldsState() {
-    var row = qs("#smFileTypeRow");
-    if (row) {
-      var extractEnabled = smSelectedOption === "extrair_arquivo";
-      row.classList.toggle("is-disabled", !extractEnabled);
-      qsa("#smFileTypeRow .b64-mode-btn").forEach(function (btn) {
-        btn.disabled = !extractEnabled;
-      });
-    }
-    var apiCard = qs("#smApiCard");
-    if (apiCard) {
-      var apiEnabled = smSelectedOption === "usar_api";
-      apiCard.hidden = !apiEnabled;
-      var urlInput = qs("#smApiUrl");
-      var methodInput = qs("#smApiMethod");
-      var paramsInput = qs("#smApiParams");
-      if (urlInput) urlInput.disabled = !apiEnabled;
-      if (methodInput) methodInput.disabled = !apiEnabled;
-      if (paramsInput) paramsInput.disabled = !apiEnabled;
-      qsa("#smApiModeToggle .b64-mode-btn").forEach(function (btn) {
-        btn.disabled = !apiEnabled;
-      });
-    }
-    var errorCard = qs("#smErrorCard");
-    if (errorCard) {
-      var fixEnabled = smSelectedOption === "corrigir_script";
-      errorCard.hidden = !fixEnabled;
-      var errorInput = qs("#smErrorInput");
-      if (errorInput) errorInput.disabled = !fixEnabled;
-    }
-    var contextCard = qs("#smContextCard");
-    if (contextCard) {
-      var contextEnabled = smSelectedOption === "corrigir_script";
-      contextCard.hidden = !contextEnabled;
-      var contextInput = qs("#smContextInput");
-      if (contextInput) contextInput.disabled = !contextEnabled;
-    }
-    var importsCard = qs("#smImportsCard");
-    if (importsCard && smSelectedOption !== "corrigir_script") {
-      importsCard.hidden = true;
-    }
-    var explanationCard = qs("#smExplanationCard");
-    if (explanationCard) {
-      explanationCard.hidden = smSelectedOption !== "corrigir_script";
-    }
-    var labelInfo = SM_QUERY_LABELS[smSelectedOption] || SM_QUERY_LABELS.extrair_arquivo;
-    var queryLabel = qs("#smQueryLabel");
-    var queryHelp = qs("#smQueryHelp");
-    if (queryLabel) queryLabel.textContent = labelInfo.label;
-    if (queryHelp) queryHelp.textContent = labelInfo.help;
-  }
-
-  var smApiMode = "single";
-
-  function wireSmApiMode() {
-    var btns = qsa("#smApiModeToggle .b64-mode-btn");
-    btns.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        if (btn.disabled) return;
-        smApiMode = btn.getAttribute("data-apimode") || "single";
-        btns.forEach(function (b) { b.classList.toggle("active", b === btn); });
-      });
-    });
-  }
-
-  function wireSmFileType() {
-    var btns = qsa("#smFileTypeRow .b64-mode-btn");
-    btns.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        if (btn.disabled) return;
-        smFileType = btn.getAttribute("data-filetype") || "txt";
-        btns.forEach(function (b) { b.classList.toggle("active", b === btn); });
-      });
-    });
-  }
 
   function updateSmAiButtonVisibility() {
     var btn = qs("#smGenerateAiBtn");
@@ -4298,23 +4146,14 @@
 
   function collectSmAiPayload() {
     var query = ((qs("#smQueryInput") || {}).value || "").trim();
-    var payload = { mode: smSelectedOption, query: query };
-    if (smSelectedOption === "extrair_arquivo") {
-      payload.fileType = smFileType;
-    } else if (smSelectedOption === "usar_api") {
-      payload.apiMode = smApiMode;
-      payload.apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
-      payload.apiMethod = (qs("#smApiMethod") || {}).value || "POST";
-      payload.apiParams = ((qs("#smApiParams") || {}).value || "").trim();
-    } else if (smSelectedOption === "corrigir_script") {
-      payload.errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
-      payload.context = ((qs("#smContextInput") || {}).value || "").trim();
-      var importNames = smFindImportedScriptNames(query);
-      if (importNames.length) {
-        payload.importedScripts = importNames.map(function (name) {
-          return { name: name, content: smImportedScripts[name] || "" };
-        });
-      }
+    var payload = { mode: "corrigir_script", query: query };
+    payload.errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
+    payload.context = ((qs("#smContextInput") || {}).value || "").trim();
+    var importNames = smFindImportedScriptNames(query);
+    if (importNames.length) {
+      payload.importedScripts = importNames.map(function (name) {
+        return { name: name, content: smImportedScripts[name] || "" };
+      });
     }
     return payload;
   }
@@ -4341,31 +4180,22 @@
     btn.addEventListener("click", function () {
       var query = input.value.trim();
       if (!query) {
-        showToast(smSelectedOption === "corrigir_script" ? "Cole o script com erro antes de gerar." : "Cole a consulta antes de gerar.", "error");
+        showToast("Cole o script com erro antes de gerar.", "error");
         return;
       }
-      if (smSelectedOption === "usar_api") {
-        var apiUrl = ((qs("#smApiUrl") || {}).value || "").trim();
-        if (!apiUrl) {
-          showToast("Informe a URL da API.", "error");
-          return;
-        }
+      var errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
+      if (!errorMessage) {
+        showToast("Cole a mensagem de erro antes de gerar.", "error");
+        return;
       }
-      if (smSelectedOption === "corrigir_script") {
-        var errorMessage = ((qs("#smErrorInput") || {}).value || "").trim();
-        if (!errorMessage) {
-          showToast("Cole a mensagem de erro antes de gerar.", "error");
-          return;
-        }
-        var importNames = smFindImportedScriptNames(query);
-        renderSmImportsCard(importNames);
-        var missingImports = importNames.filter(function (name) {
-          return !(smImportedScripts[name] && smImportedScripts[name].trim());
-        });
-        if (missingImports.length) {
-          showToast("Cole o conteudo dos scripts importados antes de gerar.", "error");
-          return;
-        }
+      var importNames = smFindImportedScriptNames(query);
+      renderSmImportsCard(importNames);
+      var missingImports = importNames.filter(function (name) {
+        return !(smImportedScripts[name] && smImportedScripts[name].trim());
+      });
+      if (missingImports.length) {
+        showToast("Cole o conteudo dos scripts importados antes de gerar.", "error");
+        return;
       }
       var payload = collectSmAiPayload();
       var originalLabel = btn.textContent;
@@ -4413,12 +4243,6 @@
   }
 
   function wireScriptMaker() {
-    smSelectedOption = SM_OPTIONS[0].key;
-    smFileType = "txt";
-    smApiMode = "single";
-    renderSmOptions();
-    wireSmFileType();
-    wireSmApiMode();
     wireSmGenerateAi();
     wireSmCopy();
     updateSmAiButtonVisibility();
